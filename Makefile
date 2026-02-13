@@ -17,6 +17,7 @@ help:
 	@echo -e "$(CYAN)Available commands:$(RESET)"
 	@echo -e "  $(YELLOW)make install$(RESET)  - Create/Update the conda environment based on environment.yml"
 	@echo -e "  $(YELLOW)make run$(RESET)      - Run the Shiny app in reload mode (development)"
+	@echo -e "  $(YELLOW)make db$(RESET)       - Download and process the database"
 
 # Create or update the conda environment
 install:
