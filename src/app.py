@@ -2,7 +2,7 @@
 # import numpy as np
 from pathlib import Path
 from shiny import App, Inputs, Outputs, Session, reactive, render, ui
-from shinywidgets import output_widget, render_plotly
+from shinywidgets import output_widget, render_plotly, render_widget
 import plotly.graph_objects as go
 import pandas as pd
 
@@ -66,7 +66,7 @@ app_ui = ui.page_fillable(
                     sep="",
                     width="100%",
                     # Set animate=True to enable animation
-                    animate=True
+                    animate=ui.AnimationOptions(interval=2000, loop=False)
                 ),
                 class_="mb-3 p-2"
             ),
@@ -80,8 +80,25 @@ app_ui = ui.page_fillable(
             # 3. World Heatmap
             ui.card(
                 ui.card_header("World Heatmap"),
+                ui.div(
+                    ui.input_select(
+                        "map_projection",
+                        None,
+                        choices=[
+                            "equirectangular",
+                            "natural earth",
+                            "orthographic",
+                            "robinson",
+                            "mercator"
+                        ],
+                        selected="robinson",
+                        width="100%",
+                    ),
+                    class_="d-flex ustify-content-end",
+                    style="width: 150px; margin-left: auto;"
+                ),
                 output_widget("map_plot"),
-                height="400px",
+                height="500px",
             ),
         ),
         col_widths=[3, 9]
@@ -114,7 +131,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             temp = curr_year_data.iloc[0]["avg_temp"]
             uncertainty = curr_year_data.iloc[0]["avg_uncertainty"]
             count = curr_year_data.iloc[0]["data_coount"]
-            
+
             display_text = f"{temp:.1f} ± {uncertainty:.1f} °C"
             sub_text = f"Based on {count} observations for {input.year()}"
         else:
@@ -223,43 +240,60 @@ def server(input: Inputs, output: Outputs, session: Session):
             margin=dict(l=20, r=20, t=40, b=20),
             hovermode="x unified",
             legend=dict(
-                orientation="v", 
+                orientation="v",
                 y=1,
                 x=1.02,
-                yanchor="top", 
+                yanchor="top",
                 xanchor="left"
             )
         )
         return fig
 
     # World Heatmap
-    @render_plotly
+    all_countries = sorted(df_yearly["Country"].unique())
+    empty_z = [None] * len(all_countries)
+
+    initial_map = go.FigureWidget(data=go.Choropleth(
+        locations=all_countries,
+        locationmode='country names',
+        z=empty_z,
+        # text=all_countries,
+        colorscale='RdBu_r',
+        zmin=-20, zmax=30,
+        marker_line_color='darkgray',
+        marker_line_width=0.5,
+        colorbar_title="Temp (°C)"
+    ))
+
+    initial_map.update_layout(
+        geo=dict(
+            showframe=False, showcoastlines=True,
+            projection_type='equirectangular',
+            showland=True, landcolor="lightgray",
+            showocean=True, oceancolor="lightblue"
+        ),
+        margin=dict(l=0, r=0, t=0, b=0),
+    )
+
+    @render_widget
     def map_plot():
         """Render the global choropleth map for the selected year"""
-        data = filtered_global_data()
+        return initial_map
 
-        fig = go.Figure(data=go.Choropleth(
-            locations=data['Country'],
-            locationmode='country names',
-            z=data['avg_temp'],
-            #text=data['Country'],
-            colorscale='RdBu_r',
-            zmin=-20, zmax=30,
-            marker_line_color='darkgray',
-            marker_line_width=0.5,
-            colorbar_title="Temp (°C)"
-        ))
+    @reactive.Effect
+    def update_map_data():
+        current_year = input.year()
+        df_curr = df_yearly[df_yearly["year"] == current_year]
+        df_curr_indexed = df_curr.set_index("Country")
 
-        fig.update_layout(
-            geo=dict(
-                showframe=False, 
-                showcoastlines=True,
-                projection_type='robinson',
-                showland=True, landcolor="lightgray"
-            ),
-            margin=dict(l=0, r=0, t=0, b=0),
-        )
-        return fig
+        df_aligned = df_curr_indexed.reindex(all_countries)
+
+        new_z = df_aligned["avg_temp"].values
+
+        initial_map.data[0].z = new_z
+
+        if input.map_projection() != initial_map.layout.geo.projection.type:
+            initial_map.layout.geo.projection.type = input.map_projection()
 
 
 app = App(app_ui, server)
