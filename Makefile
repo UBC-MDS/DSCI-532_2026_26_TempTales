@@ -1,6 +1,7 @@
 # Variables
 ENV_NAME = 532_project
 PYTHON = python
+SHELL := /bin/bash
 
 # Colors for output
 GREEN := \033[0;32m
@@ -20,14 +21,16 @@ help:
 # Create or update the conda environment
 install:
 	@echo -e "$(CYAN)Creating/updating conda environment $(ENV_NAME)..."
-	conda env update --file environment.yml --prune
+	@conda env update --file environment.yml --prune
 
 db:
 	@echo -e "$(CYAN)Downloading and updating database..."
-	$(PYTHON) src/data_loader.py
-	
+	@$(PYTHON) src/data_loader.py
+	@echo -e "$(CYAN)Processing data into pickle format...$(RESET)"
+	@$(PYTHON) src/data_processor.py
+
 # Run the Shiny app
 # --reload requires 'watchdog' package and allows auto-restart on file save
 run:
 	@echo -e "$(CYAN)Running Shiny app in development mode..."
-	shiny run src/app.py --reload --launch-browser
+	@shiny run src/app.py --reload --launch-browser
