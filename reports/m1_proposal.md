@@ -46,7 +46,7 @@ Anna is a climate researcher interested in understanding how global warming has 
 
 ### Usage Scenario
 
-Anna opens the “Climate Change Explorer” dashboard to investigate climate trends for Canada. On the left, she selects Germany from the country dropdown, and sees a data card showing the number of data used. Below it, the historical event card updates automatically as she adjusts the year slider at the top right, showing major events like World War I or II for the selected year.
+Anna opens the “TempTales” dashboard to investigate climate trends for Canada. On the left, she selects Germany from the country dropdown, and sees a data card showing the number of data used. Below it, the historical event card updates automatically as she adjusts the year slider at the top right, showing major events like World War I or II for the selected year.
 
 She then examines the seasonal temperature card to see how temperatures vary across winter, spring, summer, and fall in the selected country and year. Below the year slider, the monthly trendline chart displays the selected country’s temperature pattern throughout the month/year. Finally, Anna observes the world heatmap at the bottom right, which visualizes the country’s temperature in a global context, allowing her to compare regional and global warming patterns.
 
