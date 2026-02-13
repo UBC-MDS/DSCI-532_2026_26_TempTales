@@ -20,7 +20,7 @@ help:
 
 # Create or update the conda environment
 install:
-	@echo -e "$(CYAN)Creating/updating conda environment $(ENV_NAME)..."
+	@echo -e "$(GREEN)Creating/updating conda environment $(ENV_NAME)..."
 	@conda env update --file environment.yml --prune
 
 db:
@@ -32,5 +32,5 @@ db:
 # Run the Shiny app
 # --reload requires 'watchdog' package and allows auto-restart on file save
 run:
-	@echo -e "$(CYAN)Running Shiny app in development mode..."
+	@echo -e "$(GREEN)Running Shiny app in development mode..."
 	@shiny run src/app.py --reload --launch-browser
