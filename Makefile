@@ -9,7 +9,7 @@ RED := \033[0;31m
 CYAN := \033[0;36m
 RESET := \033[0m
 
-.PHONY: help install run
+.PHONY: help install db run
 
 # Help command to list available commands
 help:
@@ -22,6 +22,10 @@ install:
 	@echo -e "$(CYAN)Creating/updating conda environment $(ENV_NAME)..."
 	conda env update --file environment.yml --prune
 
+db:
+	@echo -e "$(CYAN)Downloading and updating database..."
+	$(PYTHON) src/data_loader.py
+	
 # Run the Shiny app
 # --reload requires 'watchdog' package and allows auto-restart on file save
 run:
