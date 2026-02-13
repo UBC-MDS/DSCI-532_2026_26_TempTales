@@ -1,0 +1,23 @@
+name: "532_project"
+
+channels:
+  - conda-forge
+
+dependencies:
+  - python=3.11
+  - altair
+  - vl-convert-python
+  - pandas
+  - numpy
+  - matplotlib
+  - seaborn
+  - plotly
+  - jupyterlab
+  - ipykernel
+  - pathlib
+  - shiny
+  - shinywidgets
+  - pip
+  - pip:
+    - kagglehub
+
