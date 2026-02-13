@@ -10,11 +10,9 @@ Briefly explain the "Why":
 
 Who are they and what role are you embodying?
 
-The primary audience for our dashboard includes students, researchers, policy makers, and environmentally conscious individuals who are interested in understanding climate change patterns over time and across countries, and how these patterns relate to major historical events.
+**Our role:** Data analyst and environmental consultant.
 
-In developing this dashboard, we are acting as data analysts and environmental consultants, presenting climate data in a clear, interactive, and interpretable way.
-
-The audience may not have advanced statistical training but wants to explore how global warming and country-level temperature trends align with historical events such as industrialization, World Wars, and major environmental policies.
+**Target audience:** Students, researchers, policy makers, and environmentally conscious individuals interested in exploring climate change trends and their relation to major historical events.
 
 ### Problem
 
