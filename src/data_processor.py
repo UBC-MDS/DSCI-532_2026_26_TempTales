@@ -37,6 +37,7 @@ def process_and_save_data(
     df_yearly = df.groupby(["year", "Country"], as_index=False).agg(
         avg_temp=("AverageTemperature", "mean"),
         avg_uncertainty=("AverageTemperatureUncertainty", "mean"),
+        data_coount=("AverageTemperature", "count")
     )
 
     # Calculate 95% Confidence Interval proxies (Upper/Lower bounds)
