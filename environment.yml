@@ -17,6 +17,8 @@ dependencies:
   - pathlib
   - shiny
   - shinywidgets
+  - watchdog
+  - anywidget
   - pip
   - pip:
     - kagglehub
