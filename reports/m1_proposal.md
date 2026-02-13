@@ -76,16 +76,13 @@ This workflow lets Alice explore, contextualize, and compare temperature trends 
 
 Provide **at least 3** User Stories or Job Stories that outline specific tasks the user needs to perform.
 
-User Story 1
-
+**User Story 1**
 As a climate researcher, I want to select a country and view its seasonal and monthly temperature trends for a specific year, so that I can analyze climate patterns over time.
 
-User Story 2
-
+**User Story 2**
 As a climate researcher, I want to see historical events associated with the selected year, so that I can contextualize unusual trends or anomalies in temperature data.
 
-User Story 3
-
+**User Story 3**
 As a climate researcher, I want to visualize a world heatmap showing the selected country’s temperature for the selected year, so that I can compare regional and global temperature patterns.
 
 ### Section 4: Exploratory Data Analysis
