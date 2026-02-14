@@ -19,6 +19,7 @@ dependencies:
   - shinywidgets
   - watchdog
   - anywidget
+  - tabulate
   - pip
   - pip:
     - kagglehub

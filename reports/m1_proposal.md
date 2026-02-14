@@ -33,10 +33,22 @@ By consolidating complex climate datasets into a user-friendly, interactive dash
 
 rubric={reasoning:8}
 
-Describe the dataset you finalized in Step 1.
+We are currently pulling from two datasets: `Country` and `Globe`. The Kaggle source provides 5 datasets at different levels of refinement: global, country, state, city, and major city.
 
-- **Stats:** Number of rows/columns.
-- **Relevance:** How variables potentially link to the problem.
+The global has additional measurement of both land and a combined land-ocean average temp, as well as min and max statistics and uncertainty measurements.
+
+The country dataset provides monthly land temperature data for each country, along with associated uncertainty estimates. The country dataset has more missing rows because of countries collecting data at different times or rates. The dataset has 243 unique countries.
+
+We decided to use rely on the global datset for global measurement, instead of averaging across all countries, to honour the source of the data collection, especially considering differences in date range. However, both datasets end up with 266 years of available data.
+
+**Table 1.** Dataset summary statistics.
+
+| Dataset   |   Rows |   Num Columns | Scale   | Unique Countries   | Date Range   |   Available Years of Data |   Missing Temp |
+|:----------|-------:|--------------:|:--------|:-------------------|:-------------|--------------------------:|---------------:|
+| Country   | 577462 |             5 | Monthly | 243                | 1743 to 2013 |                       266 |          32651 |
+| Globe     |   3192 |            10 | Monthly | Global Measurement | 1750 to 2015 |                       266 |             12 |
+
+Temperature variables directly inform our dashboard's objective of assessing changes in global temperature over time. We will add further categorization of historic events tied to specific periods. We also recognize how large the dataset is, so we have decided to use yearly averages for visualizations while retaining flexibility for seasonal analysis. From this data, we can evaluate long-term trends and screen for changes.
 
 ## Section 3: Research Questions & Usage Scenarios
 
@@ -68,15 +80,17 @@ As a climate researcher, I want to visualize a world heatmap showing the selecte
 
 ### Section 4: Exploratory Data Analysis
 
-rubric={reasoning:10}
+Using User Story 3 for context: examining global and national temperature trends can help researchers contextualize specific years for their purposes.
 
-Demonstrate that your data can actually support your user stories.
+![Figure 1](../data/figures/global_land_avg_temp_by_year.png)
 
-- Select **one** of your User Stories/JTBD from Section 3.
-- Create a Jupyter notebook in the `notebooks/` folder (e.g., `notebooks/eda_analysis.ipynb`).
-  - Create 1-2 static visualizations or summary tables that directly address the user's task.
-- In your proposal document (this section), briefly explain what the visualization shows and how comparing these values specifically supports the user's decision-making.
-  - _(Include the relevant plots or a link to the notebook in this section)._
+Figure 1 presents the global average as a baseline, indicating a macro-level warming trend. This also shows that uncertainty is much higher in older measurements, reflecting limitations in historical instruments and recording practices.  By situating these results with key historical periods, such as the Industrial Revolution, users can explore potential relationships between human activity and observed temperature changes.
+
+![Figure 2](../data/figures/avg_temp_by_year_Canada.png)
+
+![Figure 3](../data/figures/UK_avg_temp_by_year.png)
+
+In addition, we provide examples of how refining to specific countries can indicate whether warming is uniform or whether there are regional or global anomalies. For example, we can look at the UK (Figure 1) and see very consistent, older data collection. This country underwent earlier industrialization but has a more maritime climate. Compared to Canada (Figure 2), there's greater uncertainty in the older measurement, and the rate of increase appears larger, potentially due to amplification at higher latitudes. In addition, we could focus on more specific years to identify anomalies or seasonal changes, given the project's purpose.
 
 ### Section 5: App Sketch & Description
 
