@@ -81,7 +81,7 @@ Demonstrate that your data can actually support your user stories.
 ### Section 5: App Sketch & Description
 
 The sketch of our dashboard is shown below. 
-![Sketch](/img/sketch.png) 
+![Sketch](../img/sketch.png) 
 
 #### Layouts
 The dashboard will use a two-column layout with a width ratio of 3:9.
