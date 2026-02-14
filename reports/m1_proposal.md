@@ -80,7 +80,45 @@ Demonstrate that your data can actually support your user stories.
 
 ### Section 5: App Sketch & Description
 
-rubric={viz:8,reasoning:4}
+The sketch of our dashboard is shown below. 
+![Sketch](/img/sketch.png) 
 
-- **Sketch:** A visual mockup showing layout and components (hand-drawn or software-generated). Save it as `img/sketch.png` and embed it in your proposal markdown file (e.g., `![Sketch](../img/sketch.png)`).
-- **Description:** High-level explanation of interface components and interactions (landing page, filters, charts).
+#### Layouts
+The dashboard will use a two-column layout with a width ratio of 3:9.
+
+- Left column:
+
+  * Country selection dropdown (including a “World” aggregate option)
+  * Three information cards providing context and reference for interpreting the data
+
+- Right column:
+
+  * Year selection slider
+  * Monthly temperature trend line chart
+  * World heat map visualization
+
+ 
+#### Inputs 
+
+Two interactive inputs will be located at the top of the dashboard:
+
+* Country dropdown — selects a specific country or the global view.
+* Year slider — selects the year of interest.
+
+Changing either input dynamically updates all visual outputs.
+ 
+#### Cards 
+Three cards will appear in the left column:
+
+- Number of Data Points: Displays how many observations are used in the plots, helping users assess reliability when data is missing.
+- Historical Event: Shows an abbreviation of major historical events occurring in the selected year (e.g., WWII). If none exist, it displays “No historical event.”
+- Seasonal Temperature: Displays average temperature grouped by season.
+ 
+#### Plots 
+
+Two visualizations will appear in the right column:
+
+- Monthly Temperature Line Plot: Shows monthly temperatures for the selected country and year.
+
+- Temperature Heat Map: Displays the average temperature geographically for the selected year, with the selected country highlighted.
+
