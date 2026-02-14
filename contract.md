@@ -13,9 +13,9 @@ All submissions are expected to meet the criteria of the milestones as set out i
 
 ### Meetings
 
-Meeting times were established during the initial team meeting held on 2026-02-12. Meetings will be held in an assigned room in ICCS or MCLD, depending on availability, on the following schedule:  
-- 1 hour before our lab time on Wednesday from 2pm - 3pm  
-- 2 hours during lab time on Wednesday from 3pm - 5pm  
+Meeting times were established during the initial team meeting held on 2026-02-12. Meetings will be held in an assigned room in ICCS, MCLD, or IRC, depending on availability, on the following schedule:  
+- 1 hour before our lab time on Thursday from 1pm - 2pm  
+- 2 hours during lab time on Thursday from 2pm - 4pm  
 - For a total time 3 hours of assigned time  
 
 The expectation would be each individual would do 2 hours of personal work for week.  
