@@ -33,10 +33,22 @@ By consolidating complex climate datasets into a user-friendly, interactive dash
 
 rubric={reasoning:8}
 
-Describe the dataset you finalized in Step 1.
+We are currently pulling from two datasets: `Country` and `Globe`. The Kaggle source provides 5 datasets at different levels of refinement: global, country, state, city, and major city.
 
-- **Stats:** Number of rows/columns.
-- **Relevance:** How variables potentially link to the problem.
+The global has additional measurement of both land and a combined land-ocean average temp, as well as min and max statistics and uncertainty measurements.
+
+The country dataset provides monthly land temperature data for each country, along with associated uncertainty estimates. The country dataset has more missing rows because of countries collecting data at different times or rates. The dataset has 243 unique countries.
+
+We decided to use rely on the global datset for global measurement, instead of averaging across all countries, to honour the source of the data collection, especially considering differences in date range. However, both datasets end up with 266 years of available data.
+
+**Table 1.** Dataset summary statistics.
+
+| Dataset   |   Rows |   Num Columns | Scale   | Unique Countries   | Date Range   |   Available Years of Data |   Missing Temp |
+|:----------|-------:|--------------:|:--------|:-------------------|:-------------|--------------------------:|---------------:|
+| Country   | 577462 |             5 | Monthly | 243                | 1743 to 2013 |                       266 |          32651 |
+| Globe     |   3192 |            10 | Monthly | Global Measurement | 1750 to 2015 |                       266 |             12 |
+
+Temperature variables directly inform our dashboard's objective of assessing changes in global temperature over time. We will add further categorization of historic events tied to specific periods. We also recognize how large the dataset is, so we have decided to use yearly averages for visualizations while retaining flexibility for seasonal analysis. From this data, we can evaluate long-term trends and screen for changes.
 
 ## Section 3: Research Questions & Usage Scenarios
 
