@@ -2,21 +2,13 @@
 
 ## Section 1: Motivation and Purpose
 
-rubric={reasoning:10}
-
-Briefly explain the "Why":
-
 ### Target Audience
-
-Who are they and what role are you embodying?
 
 **Our role:** Data analyst and environmental consultant.
 
 **Target audience:** Students, researchers, policy makers, and environmentally conscious individuals interested in exploring climate change trends and their relation to major historical events.
 
 ### Problem
-
-What challenge are they facing?
 
 Climate change is a complex, long-term phenomenon influenced by multiple human and natural factors. For most audiences, it is challenging to navigate large climate datasets and understand how global and country-level temperatures have evolved over time.
 
@@ -27,8 +19,6 @@ Additionally, connecting these temperature trends to historical events—such as
     - Which countries have experienced the most warming?
 
 ### Solution
-
-How will your dashboard help them solve it?
 
 Our interactive dashboard will allow users to explore global and country-level temperature trends over time while connecting these trends to major historical events. Features include:
 
@@ -43,61 +33,106 @@ By consolidating complex climate datasets into a user-friendly, interactive dash
 
 rubric={reasoning:8}
 
-Describe the dataset you finalized in Step 1.
+We are currently pulling from two datasets: `Country` and `Globe`. The Kaggle source provides 5 datasets at different levels of refinement: global, country, state, city, and major city.
 
-- **Stats:** Number of rows/columns.
-- **Relevance:** How variables potentially link to the problem.
+The global has additional measurement of both land and a combined land-ocean average temp, as well as min and max statistics and uncertainty measurements.
+
+The country dataset provides monthly land temperature data for each country, along with associated uncertainty estimates. The country dataset has more missing rows because of countries collecting data at different times or rates. The dataset has 243 unique countries.
+
+We decided to use rely on the global datset for global measurement, instead of averaging across all countries, to honour the source of the data collection, especially considering differences in date range. However, both datasets end up with 266 years of available data.
+
+**Table 1.** Dataset summary statistics.
+
+| Dataset   |   Rows |   Num Columns | Scale   | Unique Countries   | Date Range   |   Available Years of Data |   Missing Temp |
+|:----------|-------:|--------------:|:--------|:-------------------|:-------------|--------------------------:|---------------:|
+| Country   | 577462 |             5 | Monthly | 243                | 1743 to 2013 |                       266 |          32651 |
+| Globe     |   3192 |            10 | Monthly | Global Measurement | 1750 to 2015 |                       266 |             12 |
+
+Temperature variables directly inform our dashboard's objective of assessing changes in global temperature over time. We will add further categorization of historic events tied to specific periods. We also recognize how large the dataset is, so we have decided to use yearly averages for visualizations while retaining flexibility for seasonal analysis. From this data, we can evaluate long-term trends and screen for changes.
 
 ## Section 3: Research Questions & Usage Scenarios
 
-rubric={reasoning:10}
-
-Detail how the audience will interact with the app.
-
 ### Persona
 
-Brief description of a user.
-
-Alice is a climate researcher interested in understanding how global warming has evolved across countries over time and how major historical events may have influenced temperature trends. She is comfortable exploring data but wants a visual, interactive tool that allows her to quickly identify trends, compare countries and contextualize these trends with historical events, without manually processing large datasets.
+Anna is a climate researcher interested in understanding how global warming has evolved across countries over time and how major historical events may have influenced temperature trends. She is comfortable exploring data but wants a visual, interactive tool that allows her to quickly identify trends, compare countries and contextualize these trends with historical events, without manually processing large datasets.
 
 ### Usage Scenario
 
-create a narrative describing user needs and context.
+Anna opens the “TempTales” dashboard to investigate climate trends for Canada. On the left, she selects Germany from the country dropdown, and sees a data card showing the number of data used. Below it, the historical event card updates automatically as she adjusts the year slider at the top right, showing major events like World War I or II for the selected year.
 
-Alice opens the “Climate Change Explorer” dashboard to investigate climate trends for Canada. On the left, she selects Germany from the country dropdown, and sees a data card showing the number of data used. Below it, the historical event card updates automatically as she adjusts the year slider at the top right, showing major events like World War I or II for the selected year.
+She then examines the seasonal temperature card to see how temperatures vary across winter, spring, summer, and fall in the selected country and year. Below the year slider, the monthly trendline chart displays the selected country’s temperature pattern throughout the month/year. Finally, Anna observes the world heatmap at the bottom right, which visualizes the country’s temperature in a global context, allowing her to compare regional and global warming patterns.
 
-She then examines the seasonal temperature card to see how temperatures vary across winter, spring, summer, and fall in the selected country and year. Below the year slider, the monthly trendline chart displays the selected country’s temperature pattern throughout the month/year. Finally, Alice observes the world heatmap at the bottom right, which visualizes the country’s temperature in a global context, allowing her to compare regional and global warming patterns.
+This workflow lets Anna explore, contextualize, and compare temperature trends interactively, enabling her to investigate correlations between historical events and climate changes efficiently.
 
-This workflow lets Alice explore, contextualize, and compare temperature trends interactively, enabling her to investigate correlations between historical events and climate changes efficiently.
-
-### User Stories / JTBD
-
-Provide **at least 3** User Stories or Job Stories that outline specific tasks the user needs to perform.
+### User Stories
 
 **User Story 1**
+
 As a climate researcher, I want to select a country and view its seasonal and monthly temperature trends for a specific year, so that I can analyze climate patterns over time.
 
 **User Story 2**
+
 As a climate researcher, I want to see historical events associated with the selected year, so that I can contextualize unusual trends or anomalies in temperature data.
 
 **User Story 3**
+
 As a climate researcher, I want to visualize a world heatmap showing the selected country’s temperature for the selected year, so that I can compare regional and global temperature patterns.
 
 ### Section 4: Exploratory Data Analysis
 
-rubric={reasoning:10}
+Using User Story 3 for context: examining global and national temperature trends can help researchers contextualize specific years for their purposes.
 
-Demonstrate that your data can actually support your user stories.
+![Figure 1](../data/figures/global_land_avg_temp_by_year.png)
 
-- Select **one** of your User Stories/JTBD from Section 3.
-- Create a Jupyter notebook in the `notebooks/` folder (e.g., `notebooks/eda_analysis.ipynb`).
-  - Create 1-2 static visualizations or summary tables that directly address the user's task.
-- In your proposal document (this section), briefly explain what the visualization shows and how comparing these values specifically supports the user's decision-making.
-  - _(Include the relevant plots or a link to the notebook in this section)._
+Figure 1 presents the global average as a baseline, indicating a macro-level warming trend. This also shows that uncertainty is much higher in older measurements, reflecting limitations in historical instruments and recording practices.  By situating these results with key historical periods, such as the Industrial Revolution, users can explore potential relationships between human activity and observed temperature changes.
+
+![Figure 2](../data/figures/avg_temp_by_year_Canada.png)
+
+![Figure 3](../data/figures/UK_avg_temp_by_year.png)
+
+In addition, we provide examples of how refining to specific countries can indicate whether warming is uniform or whether there are regional or global anomalies. For example, we can look at the UK (Figure 1) and see very consistent, older data collection. This country underwent earlier industrialization but has a more maritime climate. Compared to Canada (Figure 2), there's greater uncertainty in the older measurement, and the rate of increase appears larger, potentially due to amplification at higher latitudes. In addition, we could focus on more specific years to identify anomalies or seasonal changes, given the project's purpose.
 
 ### Section 5: App Sketch & Description
 
-rubric={viz:8,reasoning:4}
+The sketch of our dashboard is shown below. 
+![Sketch](../img/sketch.png) 
 
-- **Sketch:** A visual mockup showing layout and components (hand-drawn or software-generated). Save it as `img/sketch.png` and embed it in your proposal markdown file (e.g., `![Sketch](../img/sketch.png)`).
-- **Description:** High-level explanation of interface components and interactions (landing page, filters, charts).
+#### Layouts
+The dashboard will use a two-column layout with a width ratio of 3:9.
+
+- Left column:
+
+  * Country selection dropdown (including a “World” aggregate option)
+  * Three information cards providing context and reference for interpreting the data
+
+- Right column:
+
+  * Year selection slider
+  * Monthly temperature trend line chart
+  * World heat map visualization
+
+ 
+#### Inputs 
+
+Two interactive inputs will be located at the top of the dashboard:
+
+* Country dropdown — selects a specific country or the global view.
+* Year slider — selects the year of interest.
+
+Changing either input dynamically updates all visual outputs.
+ 
+#### Cards 
+Three cards will appear in the left column:
+
+- Number of Data Points: Displays how many observations are used in the plots, helping users assess reliability when data is missing.
+- Historical Event: Shows an abbreviation of major historical events occurring in the selected year (e.g., WWII). If none exist, it displays “No historical event.”
+- Seasonal Temperature: Displays average temperature grouped by season.
+ 
+#### Plots 
+
+Two visualizations will appear in the right column:
+
+- Monthly Temperature Line Plot: Shows monthly temperatures for the selected country and year.
+
+- Temperature Heat Map: Displays the average temperature geographically for the selected year, with the selected country highlighted.
+
