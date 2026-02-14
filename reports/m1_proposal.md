@@ -80,15 +80,17 @@ As a climate researcher, I want to visualize a world heatmap showing the selecte
 
 ### Section 4: Exploratory Data Analysis
 
-rubric={reasoning:10}
+Using User Story 3 for context: examining global and national temperature trends can help researchers contextualize specific years for their purposes.
 
-Demonstrate that your data can actually support your user stories.
+![Figure 1](../data/figures/global_land_avg_temp_by_year.png)
 
-- Select **one** of your User Stories/JTBD from Section 3.
-- Create a Jupyter notebook in the `notebooks/` folder (e.g., `notebooks/eda_analysis.ipynb`).
-  - Create 1-2 static visualizations or summary tables that directly address the user's task.
-- In your proposal document (this section), briefly explain what the visualization shows and how comparing these values specifically supports the user's decision-making.
-  - _(Include the relevant plots or a link to the notebook in this section)._
+Figure 1 presents the global average as a baseline, indicating a macro-level warming trend. This also shows that uncertainty is much higher in older measurements, reflecting limitations in historical instruments and recording practices.  By situating these results with key historical periods, such as the Industrial Revolution, users can explore potential relationships between human activity and observed temperature changes.
+
+![Figure 2](../data/figures/avg_temp_by_year_Canada.png)
+
+![Figure 3](../data/figures/UK_avg_temp_by_year.png)
+
+In addition, we provide examples of how refining to specific countries can indicate whether warming is uniform or whether there are regional or global anomalies. For example, we can look at the UK (Figure 1) and see very consistent, older data collection. This country underwent earlier industrialization but has a more maritime climate. Compared to Canada (Figure 2), there's greater uncertainty in the older measurement, and the rate of increase appears larger, potentially due to amplification at higher latitudes. In addition, we could focus on more specific years to identify anomalies or seasonal changes, given the project's purpose.
 
 ### Section 5: App Sketch & Description
 
