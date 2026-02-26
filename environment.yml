@@ -4,23 +4,21 @@ channels:
   - conda-forge
 
 dependencies:
-  - python=3.11
-  - altair
-  - vl-convert-python
-  - pandas
-  - numpy
-  - matplotlib
-  - seaborn
-  - plotly
-  - jupyterlab
-  - ipykernel
-  - pathlib
-  - shiny
-  - shinywidgets
-  - watchdog
-  - anywidget
-  - tabulate
+  - python=3.11.14
+  - altair=6.0.0
+  - vl-convert-python=1.9.0
+  - pandas=3.0.0
+  - numpy=2.4.2
+  - matplotlib=3.10.8
+  - seaborn=0.13.2
+  - plotly=6.5.2
+  - jupyterlab=4.5.4
+  - ipykernel=7.2.0
+  - pathlib=1.0.1
+  - shiny=1.4.0
+  - shinywidgets=0.7.1
+  - watchdog=6.0.0
+  - anywidget=0.9.21
   - pip
   - pip:
-    - kagglehub
-
+    - kagglehub==1.0.0
