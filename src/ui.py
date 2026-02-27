@@ -4,7 +4,7 @@ from shinywidgets import output_widget
 from utils import country_choices, min_year, max_year
 
 # ==========================================
-# 1. Define Inputs (Global Filters)
+# 1. Define Inputs
 # ==========================================
 country_selector = ui.input_select(
     "country",
@@ -13,15 +13,14 @@ country_selector = ui.input_select(
     selected="Canada"
 )
 
-year_slider = ui.input_slider(
+year_input = ui.input_numeric(
     "year",
     "Select Year:",
+    value=1950,
     min=min_year,
     max=max_year,
-    value=1950,
-    sep="",
-    width="100%",
-    animate=ui.AnimationOptions(interval=2000, loop=False)
+    step=1,
+    width="100%"
 )
 
 map_projection_selector = ui.input_select(
@@ -39,13 +38,28 @@ map_projection_selector = ui.input_select(
 )
 
 # ==========================================
-# 2. Define Left Column Cards
+# 2. Define Sidebar (Collapsible)
 # ==========================================
-country_card = ui.card(
-    ui.card_header("Location"),
-    country_selector
+app_sidebar = ui.sidebar(
+    country_selector,
+    year_input,
+    title="Filters",
+    open="desktop",
+    id="app_sidebar"
 )
 
+# ==========================================
+# 3. Define Title Placeholder (Value Box)
+# ==========================================
+title_value_box = ui.value_box(
+    "TempTales",
+    ui.output_ui("title_placeholder"),
+    theme="primary"
+)
+
+# ==========================================
+# 4. Define Left Column Cards
+# ==========================================
 data_count_card = ui.card(
     ui.card_header("Data Points"),
     ui.output_ui("data_count_ui"),
@@ -64,30 +78,15 @@ seasonal_temp_card = ui.card(
     class_="mb-3"
 )
 
-# Group left column components
 left_column = ui.div(
-    country_card,
     data_count_card,
     event_card,
     seasonal_temp_card
 )
 
 # ==========================================
-# 3. Define Right Column Cards
+# 5. Define Right Area Cards
 # ==========================================
-year_card = ui.card(
-    year_slider,
-    class_="mb-3 p-2"
-)
-
-temp_plot_card = ui.card(
-    ui.card_header("Temperature Over Time"),
-    output_widget("temp_plot"),
-    height="200px",
-    class_="mb-3"
-)
-
-# Wrapper for map projection selector to align it to the right
 map_selector_container = ui.div(
     map_projection_selector,
     class_="d-flex justify-content-end",
@@ -98,23 +97,48 @@ map_plot_card = ui.card(
     ui.card_header("World Heatmap"),
     map_selector_container,
     output_widget("map_plot"),
-    height="500px"
+    height="500px",
+    full_screen=True
 )
 
-# Group right column components
-right_column = ui.div(
-    year_card,
-    temp_plot_card,
-    map_plot_card
+temp_plot_card = ui.card(
+    ui.card_header("Temperature Over Time"),
+    output_widget("temp_plot"),
+    height="200px",
+    class_="mb-3",
+    full_screen=True
+)
+
+table_card = ui.card(
+    ui.card_header("Data Table"),
+    ui.output_data_frame("data_table"),
+    height="200px",
+    class_="mb-3"
+)
+
+# Right area: Heatmap on top, Line plot + Table below
+right_area = ui.div(
+    map_plot_card,
+    ui.layout_columns(
+        temp_plot_card,
+        table_card,
+        col_widths=[6, 6]
+    )
 )
 
 # ==========================================
-# 4. Final App UI Assembly
+# 6. Final App UI Assembly
 # ==========================================
-app_ui = ui.page_fillable(
+main_content = ui.div(
+    title_value_box,
     ui.layout_columns(
         left_column,
-        right_column,
+        right_area,
         col_widths=[3, 9]
     )
+)
+
+app_ui = ui.page_sidebar(
+    app_sidebar,
+    main_content
 )
