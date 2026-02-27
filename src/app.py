@@ -2,11 +2,12 @@
 from shiny import App, Inputs, Outputs, Session, reactive, render, ui
 from shinywidgets import render_plotly, render_widget
 import plotly.graph_objects as go
+import pandas as pd
 
 # =====================================
 # Import shared data and UI layout
 # =====================================
-from utils import df_yearly, df_seasonal
+from utils import df_yearly, df_seasonal, min_year, max_year
 from ui import app_ui
 
 
@@ -15,6 +16,14 @@ def server(input: Inputs, output: Outputs, session: Session):
     # Reactive Filters
     # =============================
     @reactive.Calc
+    def selected_year():
+        """Safe year value; input_numeric may return None when empty."""
+        y = input.year()
+        if y is None:
+            return 1950
+        return max(min_year, min(max_year, int(y)))
+
+    @reactive.Calc
     def filtered_yearly_data():
         """Aggregated yearly data for the selected country"""
         return df_yearly[df_yearly["Country"] == input.country()]
@@ -22,7 +31,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.Calc
     def filtered_global_data():
         """Global data for the selected year"""
-        return df_yearly[df_yearly["year"] == input.year()]
+        return df_yearly[df_yearly["year"] == selected_year()]
 
     # =============================
     # Data Count UI
@@ -31,7 +40,8 @@ def server(input: Inputs, output: Outputs, session: Session):
     def data_count_ui():
         """Render the data count UI element"""
         data = filtered_yearly_data()
-        curr_year_data = data[data["year"] == input.year()]
+        year = selected_year()
+        curr_year_data = data[data["year"] == year]
 
         if not curr_year_data.empty:
             temp = curr_year_data.iloc[0]["avg_temp"]
@@ -39,10 +49,10 @@ def server(input: Inputs, output: Outputs, session: Session):
             count = curr_year_data.iloc[0]["data_count"]
 
             display_text = f"{temp:.1f} ± {uncertainty:.1f} °C"
-            sub_text = f"Based on {count} observations for {input.year()}"
+            sub_text = f"Based on {count} observations for {year}"
         else:
             display_text = "No Data"
-            sub_text = f"No records for {input.year()}"
+            sub_text = f"No records for {year}"
 
         return ui.div(
             ui.h2(display_text, class_="text-primary"),
@@ -55,7 +65,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.ui
     def event_ui():
         """Render historical context based on year range"""
-        year = input.year()
+        year = selected_year()
         # Event Place holder
         events = [
             (1860, 1900, "Post-Industrial Revolution"),
@@ -80,7 +90,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     def seasonal_temp_ui():
         """Render the seasonal temperature UI element"""
         mask = (df_seasonal["Country"] == input.country()) & (
-            df_seasonal["year"] == input.year())
+            df_seasonal["year"] == selected_year())
         curr_data = df_seasonal[mask]
 
         if curr_data.empty:
@@ -102,6 +112,33 @@ def server(input: Inputs, output: Outputs, session: Session):
             ))
 
         return ui.div(*rows)
+
+    # =============================
+    # Title Placeholder (Value Box)
+    # =============================
+    @render.ui
+    def title_placeholder():
+        """Placeholder for future year-difference or dashboard title logic."""
+        return "Comparing Placeholder"
+
+    # =============================
+    # Data Table (Line Plot Data)
+    # =============================
+    @render.data_frame
+    def data_table():
+        """Table of data used for line plot; supports data_view() for export."""
+        data = filtered_yearly_data()
+        if data.empty:
+            return render.DataGrid(pd.DataFrame(), selection_mode="rows")
+        return render.DataGrid(data, selection_mode="rows")
+
+    @reactive.Calc
+    def exportable_table_data():
+        """Data for export; uses selected rows if any, else current view."""
+        view = data_table.data_view(selected=True)
+        if view.empty:
+            view = data_table.data_view()
+        return view
 
     # =============================
     # Temperature Plot
@@ -195,7 +232,7 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     @reactive.Effect
     def update_map_data():
-        current_year = input.year()
+        current_year = selected_year()
         df_curr = df_yearly[df_yearly["year"] == current_year]
         df_curr_indexed = df_curr.set_index("Country")
 

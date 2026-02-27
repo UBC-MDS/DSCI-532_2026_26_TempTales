@@ -47,7 +47,10 @@ The core logic of the project is located in the `src/` directory.
 │   ├── app.py              # Main entry point for the Shiny App
 │   ├── data_loader.py      # Script to download and update the database
 │   └── data_processor.py   # Script to clean and transform data
+│   └── ui.py               # Dedicated entirely to the frontend layout. 
+│   └── utils.py            # Handles all file path configurations, data loading, and initializes global UI variables
 ├── environment.yml         # Conda environment configuration
+├── requirements.txt        # Python package dependencies
 ├── Makefile                # Project automation scripts
 └── README.md               # Main project documentation
 
