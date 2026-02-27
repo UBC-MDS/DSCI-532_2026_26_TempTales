@@ -1,28 +1,115 @@
 # imports
+# import numpy as np
+from pathlib import Path
 from shiny import App, Inputs, Outputs, Session, reactive, render, ui
-from shinywidgets import render_plotly, render_widget
+from shinywidgets import output_widget, render_plotly, render_widget
 import plotly.graph_objects as go
 import pandas as pd
 
-# =====================================
-# Import shared data and UI layout
-# =====================================
-from utils import df_yearly, df_seasonal, min_year, max_year
-from ui import app_ui
+# Path Configurations
+app_dir = Path(__file__).parent
+data_path = app_dir / ".." / "data" / "processed"
+
+# Data Loading
+df_yearly = pd.read_pickle(data_path / "df_yearly.pkl")
+df_seasonal = pd.read_pickle(data_path / "df_seasonal.pkl")
+
+country_choices = sorted(df_yearly["Country"].unique().tolist())
+min_year = int(df_yearly["year"].min())
+max_year = int(df_yearly["year"].max())
+
+# UI Layout
+app_ui = ui.page_fillable(
+    ui.layout_columns(
+        # Left Column: Controls and Info
+        ui.div(
+            # 1. Country Selector (Inpout Filter)
+            ui.card(
+                ui.card_header("Location"),
+                ui.input_select(
+                    "country",
+                    "Select Country",
+                    choices=country_choices,
+                    selected="Canada" if "Canada" in country_choices else country_choices[0]
+                )
+            ),
+            # 2. Data Counter
+            ui.card(
+                ui.card_header("Data Points"),
+                ui.output_ui("data_count_ui"),
+                class_="mb-3"
+            ),
+            # 3. Historical Event Card
+            ui.card(
+                ui.card_header("Historical Event"),
+                ui.output_ui("event_ui"),
+                class_="bg-light"
+            ),
+            # 4. Seansonal Temperature Card
+            ui.card(
+                ui.card_header("Seasonal Temperature"),
+                ui.output_ui("seasonal_temp_ui"),
+                class_="mb-3"
+            )
+        ),
+
+        # Right Column: Dashboard and Visualizations
+        ui.div(
+            # 1. Year Slider
+            ui.card(
+                ui.input_slider(
+                    "year",
+                    "Select Year:",
+                    min=min_year,
+                    max=max_year,
+                    value=1950,
+                    sep="",
+                    width="100%",
+                    # Set animate=True to enable animation
+                    animate=ui.AnimationOptions(interval=2000, loop=False)
+                ),
+                class_="mb-3 p-2"
+            ),
+            # 2. Temperature Plot
+            ui.card(
+                ui.card_header("Temperature Over Time"),
+                output_widget("temp_plot"),
+                height="200px",
+                class_="mb-3"
+            ),
+            # 3. World Heatmap
+            ui.card(
+                ui.card_header("World Heatmap"),
+                ui.div(
+                    ui.input_select(
+                        "map_projection",
+                        None,
+                        choices=[
+                            "equirectangular",
+                            "natural earth",
+                            "orthographic",
+                            "robinson",
+                            "mercator"
+                        ],
+                        selected="robinson",
+                        width="100%",
+                    ),
+                    class_="d-flex ustify-content-end",
+                    style="width: 150px; margin-left: auto;"
+                ),
+                output_widget("map_plot"),
+                height="500px",
+            ),
+        ),
+        col_widths=[3, 9]
+    )
+)
+
+# Server Logic
 
 
 def server(input: Inputs, output: Outputs, session: Session):
-    # =============================
     # Reactive Filters
-    # =============================
-    @reactive.Calc
-    def selected_year():
-        """Safe year value; input_numeric may return None when empty."""
-        y = input.year()
-        if y is None:
-            return 1950
-        return max(min_year, min(max_year, int(y)))
-
     @reactive.Calc
     def filtered_yearly_data():
         """Aggregated yearly data for the selected country"""
@@ -31,41 +118,36 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.Calc
     def filtered_global_data():
         """Global data for the selected year"""
-        return df_yearly[df_yearly["year"] == selected_year()]
+        return df_yearly[df_yearly["year"] == input.year()]
 
-    # =============================
     # Data Count UI
-    # =============================
     @render.ui
     def data_count_ui():
         """Render the data count UI element"""
         data = filtered_yearly_data()
-        year = selected_year()
-        curr_year_data = data[data["year"] == year]
+        curr_year_data = data[data["year"] == input.year()]
 
         if not curr_year_data.empty:
             temp = curr_year_data.iloc[0]["avg_temp"]
             uncertainty = curr_year_data.iloc[0]["avg_uncertainty"]
-            count = curr_year_data.iloc[0]["data_count"]
+            count = curr_year_data.iloc[0]["data_coount"]
 
             display_text = f"{temp:.1f} ± {uncertainty:.1f} °C"
-            sub_text = f"Based on {count} observations for {year}"
+            sub_text = f"Based on {count} observations for {input.year()}"
         else:
             display_text = "No Data"
-            sub_text = f"No records for {year}"
+            sub_text = f"No records for {input.year()}"
 
         return ui.div(
             ui.h2(display_text, class_="text-primary"),
             ui.p(sub_text, class_="text-muted mb-0")
         )
 
-    # =============================
     # Historical Event UI
-    # =============================
     @render.ui
     def event_ui():
         """Render historical context based on year range"""
-        year = selected_year()
+        year = input.year()
         # Event Place holder
         events = [
             (1860, 1900, "Post-Industrial Revolution"),
@@ -83,14 +165,12 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         return ui.p(f"{year}: {text}", class_="fw-bold")
 
-    # =============================
     # Seasonal Temperature UI
-    # =============================
     @render.ui
     def seasonal_temp_ui():
         """Render the seasonal temperature UI element"""
         mask = (df_seasonal["Country"] == input.country()) & (
-            df_seasonal["year"] == selected_year())
+            df_seasonal["year"] == input.year())
         curr_data = df_seasonal[mask]
 
         if curr_data.empty:
@@ -113,36 +193,7 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         return ui.div(*rows)
 
-    # =============================
-    # Title Placeholder (Value Box)
-    # =============================
-    @render.ui
-    def title_placeholder():
-        """Placeholder for future year-difference or dashboard title logic."""
-        return "Comparing Placeholder"
-
-    # =============================
-    # Data Table (Line Plot Data)
-    # =============================
-    @render.data_frame
-    def data_table():
-        """Table of data used for line plot; supports data_view() for export."""
-        data = filtered_yearly_data()
-        if data.empty:
-            return render.DataGrid(pd.DataFrame(), selection_mode="rows")
-        return render.DataGrid(data, selection_mode="rows")
-
-    @reactive.Calc
-    def exportable_table_data():
-        """Data for export; uses selected rows if any, else current view."""
-        view = data_table.data_view(selected=True)
-        if view.empty:
-            view = data_table.data_view()
-        return view
-
-    # =============================
     # Temperature Plot
-    # =============================
     @render_plotly
     def temp_plot():
         """Render the main trend line with uncertainty bands"""
@@ -198,9 +249,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         )
         return fig
 
-    # =============================
     # World Heatmap
-    # =============================
     all_countries = sorted(df_yearly["Country"].unique())
     empty_z = [None] * len(all_countries)
 
@@ -208,6 +257,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         locations=all_countries,
         locationmode='country names',
         z=empty_z,
+        # text=all_countries,
         colorscale='RdBu_r',
         zmin=-20, zmax=30,
         marker_line_color='darkgray',
@@ -218,7 +268,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     initial_map.update_layout(
         geo=dict(
             showframe=False, showcoastlines=True,
-            projection_type='robinson',
+            projection_type='equirectangular',
             showland=True, landcolor="lightgray",
             showocean=True, oceancolor="lightblue"
         ),
@@ -232,7 +282,7 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     @reactive.Effect
     def update_map_data():
-        current_year = selected_year()
+        current_year = input.year()
         df_curr = df_yearly[df_yearly["year"] == current_year]
         df_curr_indexed = df_curr.set_index("Country")
 
@@ -246,7 +296,4 @@ def server(input: Inputs, output: Outputs, session: Session):
             initial_map.layout.geo.projection.type = input.map_projection()
 
 
-# =============================
-# Initialize the application
-# =============================
 app = App(app_ui, server)
