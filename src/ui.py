@@ -81,7 +81,7 @@ data_count_card = ui.card(
 event_card = ui.card(
     ui.card_header("Historical Event"),
     ui.output_ui("event_ui"),
-    class_="bg-light"
+    class_="bg-light mb-3"
 )
 
 seasonal_temp_card = ui.card(
@@ -116,25 +116,31 @@ map_plot_card = ui.card(
 temp_plot_card = ui.card(
     ui.card_header("Temperature Over Time"),
     output_widget("temp_plot"),
-    height="200px",
+    height="450px",
     class_="mb-3",
     full_screen=True
 )
 
 table_card = ui.card(
-    ui.card_header("Data Table"),
+    ui.card_header(
+        ui.div(
+            "Data Table",
+            ui.download_button("download_table_csv", "Export CSV", class_="btn-sm"),
+            class_="d-flex justify-content-between align-items-center w-100"
+        )
+    ),
     ui.output_data_frame("data_table"),
-    height="200px",
+    height="300px",
     class_="mb-3"
 )
 
-# Right area: Heatmap on top, Line plot + Table below
+# Right area: Heatmap on top, Line plot + Table side-by-side (8:4)
 right_area = ui.div(
     map_plot_card,
     ui.layout_columns(
         temp_plot_card,
         table_card,
-        col_widths=[6, 6]
+        col_widths=[8, 4]
     )
 )
 

@@ -25,6 +25,12 @@ df_seasonal = df_processed.groupby(
 )["AvgTemp"].mean()
 df_seasonal = df_seasonal.rename(columns={"country": "Country", "AvgTemp": "AverageTemperature"})
 
+# Pre-aggregate monthly: mean temperature per year, country, month (for dual-line comparison)
+df_monthly = df_processed.groupby(
+    ["year", "country", "month"], as_index=False
+)["AvgTemp"].mean()
+df_monthly = df_monthly.rename(columns={"country": "Country"})
+
 # Global UI Configurations
 country_choices = sorted(df_yearly["Country"].unique().tolist())
 min_year = int(df_yearly["year"].min())
