@@ -24,18 +24,18 @@ Plan every input, reactive calc, and output your app will have. Use this as a ch
 | `baseline_year`       | Input         | `ui.input_numeric()`    | —                                   | #1, #6             |
 | `target_year`         | Input         | `ui.input_numeric()`    | —                                   | #1, #6             |
 | `selected_range`      | Reactive calc | `@reactive.Calc`        | `baseline_year`, `target_year`      | #1, #6             |
-| `filtered_yearly`     | Reactive calc | `@reactive.Calc`        | `input_country`                     | #1                 |
-| `filtered_global`     | Reactive calc | `@reactive.Calc`        | `filtered_yearly`, `selected_range` | #1, #6             |
-| `monthly_comparison`  | Reactive calc | `@reactive.Calc`        | `input_country`, `selected_range`, `df_monthly` | #1, #8, #9         |
+| `filtered_yearly_data`     | Reactive calc | `@reactive.Calc`        | `input_country`                     | #1                 |
+| `filtered_global_data`     | Reactive calc | `@reactive.Calc`        | `filtered_yearly_data`, `selected_range` | #1, #6             |
+| `monthly_comparison_data`  | Reactive calc | `@reactive.Calc`        | `input_country`, `selected_range`, `df_monthly` | #1, #8, #9         |
 | `year_validation_ui`  | Output        | `@render.ui`            | `selected_range`                    | #1, #6             |
-| `temp_plot`           | Output        | `@render_altair`        | `monthly_comparison`                | #1, #8             |
+| `temp_plot`           | Output        | `@render_altair`        | `monthly_comparison_data`                | #1, #8             |
 | `seasonal_temp_ui`    | Output        | `@render.data_frame`    | `input_country`, `selected_range`, `df_seasonal` | #1, #6             |
-| `data_count_ui`       | Output        | `@render.ui`            | `filtered_global`                   | #1, #6             |
+| `data_count_ui`       | Output        | `@render.ui`            | `filtered_global_data`                   | #1, #6             |
 | `event_ui`            | Output        | `@render.ui`            | `selected_range`                    | #2                 |
 | `title_placeholder`   | Output        | `@render.ui`            | `input_country`, `selected_range`   | #7                 |
 | `map_plot`            | Output        | `@render_widget`        | `df_yearly` (target year), `input_country`, `selected_range` | #3, #4, #5         |
-| `data_table`          | Output        | `@render.data_frame`    | `monthly_comparison`                | #1, #9             |
-| `download_table_csv`  | Output        | `@render.download`      | `monthly_comparison`                | #1, #9             |
+| `data_table`          | Output        | `@render.data_frame`    | `monthly_comparison_data`                | #1, #9             |
+| `download_table_csv`  | Output        | `@render.download`      | `monthly_comparison_data`                | #1, #9             |
 
 
 ### 2.3 Reactivity Diagram
@@ -43,16 +43,16 @@ Plan every input, reactive calc, and output your app will have. Use this as a ch
 ```mermaid
 flowchart TD
   subgraph Inputs
-    C[Country]
-    B[Base Year]
-    S[Target Year]
+    C[country]
+    B[baseline_year]
+    S[target_year]
   end
 
   subgraph Reactive Calcs
     SR[selected_range]
-    FY[filtered_yearly]
-    FG[filtered_global]
-    MC[monthly_comparison]
+    FY[filtered_yearly_data]
+    FG[filtered_global_data]
+    MC[monthly_comparison_data]
   end
 
   subgraph Data Sources
@@ -62,15 +62,15 @@ flowchart TD
   end
 
   subgraph Outputs
-    TITLE([title])
+    TITLE([title_placeholder])
     VALID([year_validation_ui])
-    HIST([Historical Events])
+    HIST([event_ui])
     DC([data_count_ui])
-    ST([Seasonal Temp Table])
-    MLP([Monthly Line Chart])
-    DT([Data Table])
-    CSV([CSV Download])
-    WM([World Map])
+    ST([seasonal_temp_ui])
+    MLP([temp_plot])
+    DT([data_table])
+    CSV([download_table_csv])
+    WM([map_plot])
   end
 
   B --> SR
@@ -88,16 +88,21 @@ flowchart TD
   SR --> VALID
   SR --> HIST
   FG --> DC
+  SR --> DC
 
   C --> ST
   SR --> ST
   DS --> ST
 
   MC --> MLP
+  SR --> MLP
+  C --> MLP
+
   MC --> DT
+
   MC --> CSV
 
-  S --> WM
+  SR --> WM
   C --> WM
   DY --> WM
 ```
@@ -112,7 +117,7 @@ For each `@reactive.calc` in your diagram, briefly describe:
 
 | Reactive Calc         | Depends on                          | Transformation / Logic                                                                                       | Consumed by / Outputs                                            |
 | --------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
-| `selected_range`      | `baseline_year`, `target_year`      | Validates year inputs and returns `(baseline_year, target_year, error_flag)`. Rejects if target ≤ baseline.   | `monthly_comparison`, `filtered_global`, `year_validation_ui`, `event_ui`, `title_placeholder` |
-| `filtered_yearly`     | `input_country`                     | Filters `df_yearly` by selected country.                                                                     | `filtered_global` only                                           |
-| `filtered_global`     | `filtered_yearly`, `selected_range` | Filters `filtered_yearly` by year in [baseline, target]. Yearly avg data for both years.                     | `data_count_ui` only (map uses `df_yearly` directly for target year) |
-| `monthly_comparison`  | `input_country`, `selected_range`, `df_monthly` | Filters `df_monthly` by country and both years; merges baseline/target; adds Month, Change (red/blue semantics). | `temp_plot`, `data_table`, `download_table_csv`                  |
+| `selected_range`      | `baseline_year`, `target_year`      | Validates year inputs and returns `(baseline_year, target_year, error_flag)`. Rejects if target ≤ baseline.   | `monthly_comparison_data`, `filtered_global_data`, `year_validation_ui`, `event_ui`, `title_placeholder` |
+| `filtered_yearly_data`     | `input_country`                     | Filters `df_yearly` by selected country.                                                                     | `filtered_global_data` only                                           |
+| `filtered_global_data`     | `filtered_yearly_data`, `selected_range` | Filters `filtered_yearly_data` by year in [baseline, target]. Yearly avg data for both years.                     | `data_count_ui` only (map uses `df_yearly` directly for target year) |
+| `monthly_comparison_data`  | `input_country`, `selected_range`, `df_monthly` | Filters `df_monthly` by country and both years; merges baseline/target; adds Month, Change (red/blue semantics). | `temp_plot`, `data_table`, `download_table_csv`                  |
