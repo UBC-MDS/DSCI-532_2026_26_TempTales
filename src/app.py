@@ -11,6 +11,7 @@ import pandas as pd
 from utils import df_yearly, df_seasonal, df_monthly, min_year, max_year
 from ui import app_ui
 from plot import build_temp_chart
+from data_count import data_count_prep
 
 
 def server(input: Inputs, output: Outputs, session: Session):
@@ -102,24 +103,18 @@ def server(input: Inputs, output: Outputs, session: Session):
         if err:
             return
 
-        baseline_data = data[data["year"] == b]
-        target_data = data[data["year"] == t]
-
-        if not target_data.empty:
-            temp = target_data.iloc[0]["avg_temp"]
-            uncertainty = target_data.iloc[0]["avg_uncertainty"]
-            count = target_data.iloc[0]["data_count"]
-            display_text = f"{temp:.1f} ± {uncertainty:.1f} °C"
-            sub_text = f"Based on {count} observations for {t}"
-        else:
-            display_text = "No Data"
-            sub_text = f"No records for {t}"
+        baseline_display_text, baseline_sub_text = data_count_prep(data, b)
+        target_display_text, target_sub_text = data_count_prep(data, t)
 
         return ui.div(
-            ui.h2(display_text, class_="text-primary"),
-            ui.p(sub_text, class_="text-muted mb-0")
+            ui.h6(f"Year {b}"),
+            ui.h5(baseline_display_text, class_="text-primary"),
+            ui.p(baseline_sub_text, class_="text-muted mb-0 small"), 
+            ui.h6(f"Year {t}"),
+            ui.h5(target_display_text, class_="text-primary"),
+            ui.p(target_sub_text, class_="text-muted mb-0 small") 
         )
-
+    
     # =============================
     # Historical Event UI
     # =============================

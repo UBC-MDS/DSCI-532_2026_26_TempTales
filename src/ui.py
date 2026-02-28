@@ -73,7 +73,7 @@ title_value_box = ui.value_box(
 # 4. Define Left Column Cards
 # ==========================================
 data_count_card = ui.card(
-    ui.card_header("Data Points"),
+    ui.card_header("Yearly Average Temperature"),
     ui.output_ui("data_count_ui"),
     class_="mb-3"
 )
