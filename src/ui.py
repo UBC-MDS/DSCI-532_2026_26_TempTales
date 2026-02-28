@@ -1,7 +1,7 @@
 # imports
 from shiny import ui
 from shinywidgets import output_widget
-from utils import country_choices, min_year, max_year
+from .utils import country_choices, min_year, max_year
 
 # ==========================================
 # 1. Define Inputs
