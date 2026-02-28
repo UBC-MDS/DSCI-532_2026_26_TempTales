@@ -35,7 +35,8 @@ db:
 # --reload requires 'watchdog' package and allows auto-restart on file save
 run:
 	@echo -e "$(GREEN)Running Shiny app in development mode...$(RESET)"
-	@shiny run src/app.py --reload --launch-browser
+	#@shiny run src/app.py --reload --launch-browser
+	@python -m shiny run src/app.py --reload --launch-browser
 
 # Clean raw and processed data (including df_processed.pkl) with confirmation
 clean:
