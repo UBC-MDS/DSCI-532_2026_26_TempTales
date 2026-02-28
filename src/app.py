@@ -16,12 +16,28 @@ def server(input: Inputs, output: Outputs, session: Session):
     # Reactive Filters
     # =============================
     @reactive.Calc
-    def selected_year():
-        """Safe year value; input_numeric may return None when empty."""
-        y = input.year()
-        if y is None:
-            return 1950
-        return max(min_year, min(max_year, int(y)))
+    def selected_range():
+        b = input.baseline_year()
+        t = input.target_year()
+
+        if b is None or t is None:
+            return None, None, "Enter both years."
+
+        try:
+            b, t = int(b), int(t)
+        except (TypeError, ValueError):
+            return None, None, "Years must be numeric."
+
+        if not (min_year <= b <= max_year):
+            return None, None, f"Reference year must be between {min_year} and {max_year}."
+
+        if not (min_year <= t <= max_year):
+            return None, None, f"Target year must be between {min_year} and {max_year}."
+
+        if t <= b:
+            return None, None, "Target year must be greater than reference year."
+
+        return b, t, None
 
     @reactive.Calc
     def filtered_yearly_data():
@@ -31,7 +47,22 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.Calc
     def filtered_global_data():
         """Global data for the selected year"""
-        return df_yearly[df_yearly["year"] == selected_year()]
+        b, t, err = selected_range()
+        if err:
+            return pd.DataFrame()
+
+        data = filtered_yearly_data()
+        return data[(data["year"] >= b) & (data["year"] <= t)]
+
+    # =============================
+    # Year Validation UI
+    # =============================
+    @render.ui
+    def year_validation_ui():
+        _, _, err = selected_range()
+        if err:
+            return ui.div(err, class_="text-danger")
+        return ui.div("Year range is valid.", class_="text-success")
 
     # =============================
     # Data Count UI
@@ -39,9 +70,14 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.ui
     def data_count_ui():
         """Render the data count UI element"""
-        data = filtered_yearly_data()
-        year = selected_year()
-        curr_year_data = data[data["year"] == year]
+        data = filtered_range_data()
+
+        b, t, err = selected_range()
+        if err:
+            return
+
+        baseline_data = data[data["year"] == b]
+        target_data = data[data["year"] == t]
 
         if not curr_year_data.empty:
             temp = curr_year_data.iloc[0]["avg_temp"]
@@ -65,7 +101,12 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.ui
     def event_ui():
         """Render historical context based on year range"""
-        year = selected_year()
+
+        # Guard against invalid year inputs
+        b, t, err = selected_range()
+        if err:
+            return
+
         # Event Place holder
         events = [
             (1860, 1900, "Post-Industrial Revolution"),
@@ -89,6 +130,12 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.ui
     def seasonal_temp_ui():
         """Render the seasonal temperature UI element"""
+
+        # Guard against invalid year inputs
+        b, t, err = selected_range()
+        if err:
+            return
+
         mask = (df_seasonal["Country"] == input.country()) & (
             df_seasonal["year"] == selected_year())
         curr_data = df_seasonal[mask]
@@ -118,8 +165,12 @@ def server(input: Inputs, output: Outputs, session: Session):
     # =============================
     @render.ui
     def title_placeholder():
-        """Placeholder for future year-difference or dashboard title logic."""
-        return "Comparing Placeholder"
+        # Guard against invalid year inputs
+        b, t, err = selected_range()
+        if err:
+            return ...
+
+        return f"{b} to {t}"
 
     # =============================
     # Data Table (Line Plot Data)

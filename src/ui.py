@@ -13,10 +13,20 @@ country_selector = ui.input_select(
     selected="Canada"
 )
 
-year_input = ui.input_numeric(
-    "year",
-    "Select Year:",
+baseline_year_input = ui.input_numeric(
+    "baseline_year",
+    "Select Reference Year:",
     value=1950,
+    min=min_year,
+    max=max_year,
+    step=1,
+    width="100%"
+)
+
+target_year_input = ui.input_numeric(
+    "target_year",
+    "Select Target Year:",
+    value=2000,
     min=min_year,
     max=max_year,
     step=1,
@@ -42,10 +52,12 @@ map_projection_selector = ui.input_select(
 # ==========================================
 app_sidebar = ui.sidebar(
     country_selector,
-    year_input,
+    baseline_year_input,
+    target_year_input,
+    ui.output_ui("year_validation_ui"),
     title="Filters",
     open="desktop",
-    id="app_sidebar"
+    id="app_sidebar",
 )
 
 # ==========================================
