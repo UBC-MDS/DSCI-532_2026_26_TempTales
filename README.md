@@ -29,7 +29,12 @@ Rendered Dashboard link: https://connect.posit.cloud/purityj/content/019c9116-f7
 
 ## Features
 
-- Place Holder
+- **Country selection** – Explore temperature data for any country in the dataset
+- **Two-year comparison** – Compare baseline vs. target year with validated year inputs
+- **Monthly dual-line chart** – Altair overlay of monthly average temperatures (Jan–Dec) with hover tooltips and vertical rule
+- **Data table** – Monthly comparison table with red/blue color coding for change magnitude; CSV export
+- **World heatmap** – Choropleth map of global temperatures for the selected target year
+- **Seasonal & historical context** – Seasonal temperature breakdown and historical event labels
 
 ## Project Directory Structure
 
@@ -44,16 +49,16 @@ The core logic of the project is located in the `src/` directory.
 ├── notebooks/              # Jupyter Notebooks for EDA and prototyping
 ├── reports/                # Project proposals and reports
 ├── src/                    # Source code
-│   ├── app.py              # Main entry point for the Shiny App
+│   ├── app.py              # Main entry point for the Shiny App; server logic and reactive wiring
 │   ├── data_loader.py      # Script to download and update the database
-│   └── data_processor.py   # Script to clean and transform data
-│   └── ui.py               # Dedicated entirely to the frontend layout. 
-│   └── utils.py            # Handles all file path configurations, data loading, and initializes global UI variables
+│   ├── data_processor.py   # Script to clean and transform data
+│   ├── plot.py             # Altair chart builder for monthly dual-line temperature overlay
+│   ├── ui.py               # Frontend layout, inputs, and page assembly
+│   └── utils.py            # Data loading, pre-aggregation (yearly, seasonal, monthly), global UI config
 ├── environment.yml         # Conda environment configuration
 ├── requirements.txt        # Python package dependencies
 ├── Makefile                # Project automation scripts
 └── README.md               # Main project documentation
-
 ```
 
 ## Installation
