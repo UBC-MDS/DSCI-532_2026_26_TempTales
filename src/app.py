@@ -1,115 +1,47 @@
 # imports
-# import numpy as np
-from pathlib import Path
+import io
 from shiny import App, Inputs, Outputs, Session, reactive, render, ui
-from shinywidgets import output_widget, render_plotly, render_widget
+from shinywidgets import render_altair, render_plotly, render_widget
 import plotly.graph_objects as go
 import pandas as pd
 
-# Path Configurations
-app_dir = Path(__file__).parent
-data_path = app_dir / ".." / "data" / "processed"
-
-# Data Loading
-df_yearly = pd.read_pickle(data_path / "df_yearly.pkl")
-df_seasonal = pd.read_pickle(data_path / "df_seasonal.pkl")
-
-country_choices = sorted(df_yearly["Country"].unique().tolist())
-min_year = int(df_yearly["year"].min())
-max_year = int(df_yearly["year"].max())
-
-# UI Layout
-app_ui = ui.page_fillable(
-    ui.layout_columns(
-        # Left Column: Controls and Info
-        ui.div(
-            # 1. Country Selector (Inpout Filter)
-            ui.card(
-                ui.card_header("Location"),
-                ui.input_select(
-                    "country",
-                    "Select Country",
-                    choices=country_choices,
-                    selected="Canada" if "Canada" in country_choices else country_choices[0]
-                )
-            ),
-            # 2. Data Counter
-            ui.card(
-                ui.card_header("Data Points"),
-                ui.output_ui("data_count_ui"),
-                class_="mb-3"
-            ),
-            # 3. Historical Event Card
-            ui.card(
-                ui.card_header("Historical Event"),
-                ui.output_ui("event_ui"),
-                class_="bg-light"
-            ),
-            # 4. Seansonal Temperature Card
-            ui.card(
-                ui.card_header("Seasonal Temperature"),
-                ui.output_ui("seasonal_temp_ui"),
-                class_="mb-3"
-            )
-        ),
-
-        # Right Column: Dashboard and Visualizations
-        ui.div(
-            # 1. Year Slider
-            ui.card(
-                ui.input_slider(
-                    "year",
-                    "Select Year:",
-                    min=min_year,
-                    max=max_year,
-                    value=1950,
-                    sep="",
-                    width="100%",
-                    # Set animate=True to enable animation
-                    animate=ui.AnimationOptions(interval=2000, loop=False)
-                ),
-                class_="mb-3 p-2"
-            ),
-            # 2. Temperature Plot
-            ui.card(
-                ui.card_header("Temperature Over Time"),
-                output_widget("temp_plot"),
-                height="200px",
-                class_="mb-3"
-            ),
-            # 3. World Heatmap
-            ui.card(
-                ui.card_header("World Heatmap"),
-                ui.div(
-                    ui.input_select(
-                        "map_projection",
-                        None,
-                        choices=[
-                            "equirectangular",
-                            "natural earth",
-                            "orthographic",
-                            "robinson",
-                            "mercator"
-                        ],
-                        selected="robinson",
-                        width="100%",
-                    ),
-                    class_="d-flex ustify-content-end",
-                    style="width: 150px; margin-left: auto;"
-                ),
-                output_widget("map_plot"),
-                height="500px",
-            ),
-        ),
-        col_widths=[3, 9]
-    )
-)
-
-# Server Logic
+# =====================================
+# Import shared data, UI layout, and plot builders
+# =====================================
+from src.utils import df_yearly, df_seasonal, df_monthly, min_year, max_year
+from src.ui import app_ui
+from src.plot import build_temp_chart
+from src.data_count import data_count_prep
+from src.map import build_base_map, apply_country_highlight
 
 
 def server(input: Inputs, output: Outputs, session: Session):
     # Reactive Filters
+    # =============================
+    @reactive.Calc
+    def selected_range():
+        b = input.baseline_year()
+        t = input.target_year()
+
+        if b is None or t is None:
+            return None, None, "Enter both years."
+
+        try:
+            b, t = int(b), int(t)
+        except (TypeError, ValueError):
+            return None, None, "Years must be numeric."
+
+        if not (min_year <= b <= max_year):
+            return None, None, f"Reference year must be between {min_year} and {max_year}."
+
+        if not (min_year <= t <= max_year):
+            return None, None, f"Target year must be between {min_year} and {max_year}."
+
+        if t <= b:
+            return None, None, "Target year must be greater than reference year."
+
+        return b, t, None
+
     @reactive.Calc
     def filtered_yearly_data():
         """Aggregated yearly data for the selected country"""
@@ -117,37 +49,81 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     @reactive.Calc
     def filtered_global_data():
-        """Global data for the selected year"""
-        return df_yearly[df_yearly["year"] == input.year()]
+        """Global data for the selected year range"""
+        b, t, err = selected_range()
+        if err:
+            return pd.DataFrame()
+
+        data = filtered_yearly_data()
+        return data[(data["year"] >= b) & (data["year"] <= t)]
+
+    @reactive.Calc
+    def monthly_comparison_data():
+        """Monthly avg temperature comparison for baseline vs target year (avg only)."""
+        b, t, err = selected_range()
+        if err:
+            return pd.DataFrame()
+
+        country = input.country()
+        df = df_monthly[(df_monthly["Country"] == country) &
+                        (df_monthly["year"].isin([b, t]))]
+        if df.empty:
+            return pd.DataFrame()
+
+        month_labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        base = df[df["year"] == b][["month", "AvgTemp"]].rename(
+            columns={"AvgTemp": f"{b}_avg"})
+        target = df[df["year"] == t][["month", "AvgTemp"]].rename(
+            columns={"AvgTemp": f"{t}_avg"})
+        merged = base.merge(target, on="month")
+        merged["Change"] = merged[f"{t}_avg"] - merged[f"{b}_avg"]
+        merged["Month"] = merged["month"].map(lambda m: month_labels[m - 1])
+        return merged[["Month", f"{b}_avg", f"{t}_avg", "Change"]].round(2)
+
+    # =============================
+    # Year Validation UI
+    # =============================
+    @render.ui
+    def year_validation_ui():
+        _, _, err = selected_range()
+        if err:
+            return ui.div(err, class_="text-danger")
+        return ui.div("Year range is valid.", class_="text-success")
 
     # Data Count UI
     @render.ui
     def data_count_ui():
         """Render the data count UI element"""
-        data = filtered_yearly_data()
-        curr_year_data = data[data["year"] == input.year()]
+        data = filtered_global_data()
 
-        if not curr_year_data.empty:
-            temp = curr_year_data.iloc[0]["avg_temp"]
-            uncertainty = curr_year_data.iloc[0]["avg_uncertainty"]
-            count = curr_year_data.iloc[0]["data_coount"]
+        b, t, err = selected_range()
+        if err:
+            return
 
-            display_text = f"{temp:.1f} ± {uncertainty:.1f} °C"
-            sub_text = f"Based on {count} observations for {input.year()}"
-        else:
-            display_text = "No Data"
-            sub_text = f"No records for {input.year()}"
+        baseline_display_text, baseline_sub_text = data_count_prep(data, b)
+        target_display_text, target_sub_text = data_count_prep(data, t)
 
         return ui.div(
-            ui.h2(display_text, class_="text-primary"),
-            ui.p(sub_text, class_="text-muted mb-0")
+            ui.h6(f"Year {b}"),
+            ui.h5(baseline_display_text, class_="text-primary"),
+            ui.p(baseline_sub_text, class_="text-muted mb-0 small"), 
+            ui.h6(f"Year {t}"),
+            ui.h5(target_display_text, class_="text-primary"),
+            ui.p(target_sub_text, class_="text-muted mb-0 small") 
         )
-
+    
+    # =============================
     # Historical Event UI
     @render.ui
     def event_ui():
         """Render historical context based on year range"""
-        year = input.year()
+
+        # Guard against invalid year inputs
+        b, t, err = selected_range()
+        if err:
+            return
+
         # Event Place holder
         events = [
             (1860, 1900, "Post-Industrial Revolution"),
@@ -158,142 +134,199 @@ def server(input: Inputs, output: Outputs, session: Session):
         ]
 
         text = "Historical Data View"
-        for start, end, desc in events:
-            if start <= year <= end:
-                text = f"{desc} ({start}-{end})"
-                break
+        list_events = []
 
-        return ui.p(f"{year}: {text}", class_="fw-bold")
+        for ev_s, ev_e, desc in events:
+            if b <= ev_s <= t or b <= ev_e <= t:
+                text = f"{ev_s}-{ev_e}: {desc}"
+                list_events.append(ui.tags.li(text))
+
+        if not list_events:
+            return ui.p("No major recorded events in selected range.",
+                        class_="text-muted small")
+
+        return ui.tags.ul(
+            *list_events,
+            class_="text-muted small mb-0"
+        )
 
     # Seasonal Temperature UI
-    @render.ui
+    # =============================
+    @render.data_frame
     def seasonal_temp_ui():
-        """Render the seasonal temperature UI element"""
-        mask = (df_seasonal["Country"] == input.country()) & (
-            df_seasonal["year"] == input.year())
-        curr_data = df_seasonal[mask]
+        """Render a table comparing seasonal temperatures for baseline vs target year."""
 
-        if curr_data.empty:
-            return ui.p("Seasonal data not available.")
+        b, t, err = selected_range()
+        if err:
+            return render.DataGrid(pd.DataFrame({"Message": ["Invalid year selection"]}))
 
+        country = input.country()
+        df_b = df_seasonal[(df_seasonal["Country"] == country) & (df_seasonal["year"] == b)]
+        df_t = df_seasonal[(df_seasonal["Country"] == country) & (df_seasonal["year"] == t)]
+
+        seasons = ["Spring", "Summer", "Fall", "Winter"]
         rows = []
-        for season in ["Spring", "Summer", "Fall", "Winter"]:
-            row = curr_data[curr_data["season"] == season]
-            if not row.empty:
-                val = row.iloc[0]["AverageTemperature"]
-                val_str = f"{val:.1f}°C"
-            else:
-                val_str = "N/A"
 
-            rows.append(ui.div(
-                ui.span(season, class_="fw-bold"),
-                ui.span(val_str, class_="float-end"),
-                class_="border-bottom py-1"
-            ))
+        for season in seasons:
+            val_b = df_b[df_b["season"] == season]["AverageTemperature"]
+            val_t = df_t[df_t["season"] == season]["AverageTemperature"]
 
-        return ui.div(*rows)
+            temp_b = round(val_b.iloc[0], 1) if not val_b.empty else None
+            temp_t = round(val_t.iloc[0], 1) if not val_t.empty else None
+            change = None
+            if temp_b is not None and temp_t is not None:
+                change = round(temp_t - temp_b, 1)
 
-    # Temperature Plot
-    @render_plotly
-    def temp_plot():
-        """Render the main trend line with uncertainty bands"""
-        data = filtered_yearly_data()
-        if data.empty:
-            return go.Figure()
+            rows.append({
+                "Season": season,
+                str(b): temp_b if temp_b is not None else "N/A",
+                str(t): temp_t if temp_t is not None else "N/A",
+                "Change": change
+            })
 
-        fig = go.Figure()
+        df_table = pd.DataFrame(rows)
 
-        # Uncertainty Band (Transparent Upper + Filled Lower)
-        fig.add_trace(go.Scatter(
-            x=data["year"], y=data["temp_upper"],
-            mode='lines', line=dict(width=0),
-            showlegend=False, hoverinfo='skip'
-        ))
-        fig.add_trace(go.Scatter(
-            x=data["year"], y=data["temp_lower"],
-            mode='lines', line=dict(width=0),
-            fill='tonexty', fillcolor='rgba(68, 68, 68, 0.2)',
-            name='Uncertainty', hoverinfo='skip'
-        ))
+        # Color-code the Change column (warming red, cooling blue)
+        styles = []
+        if "Change" in df_table.columns:
+            change_col = df_table.columns.get_loc("Change")
+            for i, val in enumerate(df_table["Change"]):
+                if pd.isna(val):
+                    continue
+                if val > 0:
+                    styles.append({
+                        "rows": [i],
+                        "cols": [change_col],
+                        "style": {"color": "#c0392b", "backgroundColor": "rgba(231, 76, 60, 0.15)"}
+                    })
+                elif val < 0:
+                    styles.append({
+                        "rows": [i],
+                        "cols": [change_col],
+                        "style": {"color": "#2980b9", "backgroundColor": "rgba(52, 152, 219, 0.15)"}
+                    })
 
-        # Mean Temperature Line
-        fig.add_trace(go.Scatter(
-            x=data["year"], y=data["avg_temp"],
-            mode='lines', name='Avg Temp',
-            line=dict(color='firebrick', width=2)
-        ))
+        return render.DataGrid(df_table, selection_mode="none", styles=styles)
 
-        # Current Year Marker
-        curr = data[data["year"] == input.year()]
-        if not curr.empty:
-            fig.add_trace(go.Scatter(
-                x=curr["year"], y=curr["avg_temp"],
-                mode='markers', marker=dict(
-                    color='black', size=6, opacity=0.8
-                ),
-                showlegend=False
-            ))
+    # =============================
+    # Title Placeholder (Value Box)
+    # =============================
+    @render.ui
+    def title_placeholder():
+        b, t, err = selected_range()
+        if err:
+            return ui.div("Invalid year selection", class_="text-danger fw-bold")
 
-        fig.update_layout(
-            title=f"Temperature History: {input.country()}",
-            xaxis_title="Year", yaxis_title="Temperature (°C)",
-            margin=dict(l=20, r=20, t=40, b=20),
-            hovermode="x unified",
-            legend=dict(
-                orientation="v",
-                y=1,
-                x=1.02,
-                yanchor="top",
-                xanchor="left"
-            )
+        country = input.country()
+        
+        # Compact horizontal title line
+        title_text = f"TempTales — {country}: {b} vs {t} (Temperature Comparison)"
+        
+        return ui.div(
+            ui.h5(title_text, class_="fw-bold text-dark mb-0"),
+            class_="p-2"
         )
-        return fig
+
+    # =============================
+    # Data Table (Monthly Comparison)
+    # =============================
+    def _table_styles(df: pd.DataFrame):
+        """Red (warmer) / blue (cooler) color scheme for Change column."""
+        if df.empty or "Change" not in df.columns:
+            return []
+        change_col = df.columns.get_loc("Change")
+        styles = []
+        for i, val in enumerate(df["Change"]):
+            if pd.isna(val):
+                continue
+            if val > 0:
+                styles.append({
+                    "rows": [i],
+                    "cols": [change_col],
+                    "style": {"color": "#c0392b", "backgroundColor": "rgba(231, 76, 60, 0.15)"}
+                })
+            elif val < 0:
+                styles.append({
+                    "rows": [i],
+                    "cols": [change_col],
+                    "style": {"color": "#2980b9", "backgroundColor": "rgba(52, 152, 219, 0.15)"}
+                })
+        return styles
+
+    @render.data_frame
+    def data_table():
+        """Table of monthly avg temperature comparison; supports data_view() for export."""
+        data = monthly_comparison_data()
+        if data.empty:
+            return render.DataGrid(pd.DataFrame(), selection_mode="rows")
+        return render.DataGrid(data, selection_mode="rows", styles=_table_styles)
+
+    @render.download(filename=lambda: _csv_download_filename())
+    def download_table_csv():
+        """Export monthly comparison data as CSV."""
+        data = monthly_comparison_data()
+        if data.empty:
+            yield ""
+            return
+        buf = io.StringIO()
+        data.to_csv(buf, index=False)
+        yield buf.getvalue()
+
+    def _csv_download_filename():
+        """Generate download filename from current filters."""
+        b, t, err = selected_range()
+        if err:
+            return "temperature_data.csv"
+        country = input.country().replace(" ", "_")
+        return f"temperature_{country}_{b}_{t}.csv"
+
+    # =============================
+    # Temperature Plot (Monthly Dual-Line, Altair)
+    # =============================
+    @render_altair
+    def temp_plot():
+        """Render monthly dual-line comparison: baseline vs target year avg temps."""
+        data = monthly_comparison_data()
+        b, t, err = selected_range()
+        if err:
+            return build_temp_chart(pd.DataFrame(), 0, 0, "", height=300)
+        return build_temp_chart(
+            data, b, t, input.country(), height=300
+        )
 
     # World Heatmap
     all_countries = sorted(df_yearly["Country"].unique())
-    empty_z = [None] * len(all_countries)
-
-    initial_map = go.FigureWidget(data=go.Choropleth(
-        locations=all_countries,
-        locationmode='country names',
-        z=empty_z,
-        # text=all_countries,
-        colorscale='RdBu_r',
-        zmin=-20, zmax=30,
-        marker_line_color='darkgray',
-        marker_line_width=0.5,
-        colorbar_title="Temp (°C)"
-    ))
-
-    initial_map.update_layout(
-        geo=dict(
-            showframe=False, showcoastlines=True,
-            projection_type='equirectangular',
-            showland=True, landcolor="lightgray",
-            showocean=True, oceancolor="lightblue"
-        ),
-        margin=dict(l=0, r=0, t=0, b=0),
-    )
+    initial_map = build_base_map(all_countries)
 
     @render_widget
     def map_plot():
         """Render the global choropleth map for the selected year"""
+        initial_map.update_layout(autosize=True)
         return initial_map
 
     @reactive.Effect
     def update_map_data():
-        current_year = input.year()
-        df_curr = df_yearly[df_yearly["year"] == current_year]
+        b, t, err = selected_range()
+        if err:
+            return
+        
+        selected_country = input.country()
+
+        # --- update temperature values ---
+        df_curr = df_yearly[df_yearly["year"] == t]
         df_curr_indexed = df_curr.set_index("Country")
-
         df_aligned = df_curr_indexed.reindex(all_countries)
-
         new_z = df_aligned["avg_temp"].values
 
         initial_map.data[0].z = new_z
 
-        if input.map_projection() != initial_map.layout.geo.projection.type:
-            initial_map.layout.geo.projection.type = input.map_projection()
+        # --- highlight selected country ---
+        apply_country_highlight(initial_map, all_countries, selected_country)
 
+        # --- zoom select country ---
+        if selected_country:
+            initial_map.update_geos(projection_scale=2.0, fitbounds="locations")
+        else:
+            initial_map.update_geos(projection_scale=1.0)
 
 app = App(app_ui, server)

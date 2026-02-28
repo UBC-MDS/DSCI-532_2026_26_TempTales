@@ -5,6 +5,8 @@
 | **License** | [![License](https://img.shields.io/github/license/ubc-mds/dsci-532_2026_26_tbd?label=License)](LICENSE) |
 | **Python** | [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/) |
 | **Status** | [![Repo Status](https://img.shields.io/badge/repo%20status-Active-brightgreen)](https://github.com/ubc-mds/dsci-532_2026_26_tbd) |
+<<<<<<< HEAD
+=======
 ## Overview
 
 **TempTales** is an interactive dashboard that allows users to explore global and country-level temperature trends over time while connecting these trends to major historical events. Users can select a country, view seasonal and monthly temperature patterns, and see how significant events like industrialization or world wars align with temperature changes. A world heatmap provides a spatial view of temperatures for selected years, making regional patterns immediately clear. This tool consolidates climate data from over two centuries into a user-friendly interface for researchers, students, policy makers, and environmentally conscious individuals.
@@ -12,69 +14,107 @@
 Deployed Dashboard URLs: 
 - main branch: https://019c9116-f7e7-177d-42c7-e2e3b140264c.share.connect.posit.cloud
 - dev branch: https://019c9879-5ec6-dc91-2d43-ec77c0e6fdac.share.connect.posit.cloud
+>>>>>>> origin/main
 
 ## Table of Contents
+
 - [TempTales: Climate Change Explorer Dashboard](#temptales-climate-change-explorer-dashboard)
-  - [Overview](#overview)
   - [Table of Contents](#table-of-contents)
-  - [Features](#features)
-  - [Project Directory Structure](#project-directory-structure)
-  - [Installation](#installation)
-  - [Usage (Makefile Guide)](#usage-makefile-guide)
-    - [Initialization](#initialization)
-    - [Running the App](#running-the-app)
-    - [Cleaning Data](#cleaning-data)
-  - [Developer Setup](#developer-setup)
-  - [Contributing](#contributing)
+  - [For Users](#for-users)
+    - [Features](#features)
+    - [Demo](#demo)
+  - [For Contributors](#for-contributors)
+    - [Project Directory Structure](#project-directory-structure)
+    - [Installation](#installation)
+    - [Usage (Makefile Guide)](#usage-makefile-guide)
+      - [Initialization](#initialization)
+      - [Running the App](#running-the-app)
+      - [Cleaning Data](#cleaning-data)
+    - [Developer Setup](#developer-setup)
+    - [Contributing](#contributing)
   - [Contributors](#contributors)
   - [Copyright](#copyright)
 
-## Features
 
-- Place Holder
+## For Users
 
-## Project Directory Structure
+**TempTales** is an interactive dashboard that allows users to explore global and country-level temperature trends over time while connecting these trends to major historical events. Users can select a country, view seasonal and monthly temperature patterns, and see how significant events like industrialization or world wars align with temperature changes. A world heatmap provides a spatial view of temperatures for selected years, making regional patterns immediately clear. This tool consolidates climate data from over two centuries into a user-friendly interface for researchers, students, policy makers, and environmentally conscious individuals.
+
+Rendered Dashboard links: 
+main branch: https://connect.posit.cloud/purityj/content/019c9116-f7e7-177d-42c7-e2e3b140264c
+dev branch: https://019c9879-5ec6-dc91-2d43-ec77c0e6fdac.share.connect.posit.cloud
+
+### Features
+
+- **Country selection** – Explore temperature data for any country in the dataset
+- **Two-year comparison** – Compare baseline vs. target year with validated year inputs
+- **Monthly dual-line chart** – Altair overlay of monthly average temperatures (Jan–Dec) with hover tooltips and vertical rule
+- **Data table** – Monthly comparison table with red/blue color coding for change magnitude; CSV export
+- **World heatmap** – Choropleth map of global temperatures for the selected target year
+- **Seasonal & historical context** – Seasonal temperature breakdown and historical event labels
+
+### Demo
+
+![Demo](img/demo.gif)
+
+## For Contributors
+
+### Project Directory Structure
 
 The core logic of the project is located in the `src/` directory.
 
 ```text
 ├── data/                   # Data storage
-│   ├── raw/                # Raw data (downloaded via make db)
-│   ├── processed/          # Processed pickle files (generated via make db)
+│   ├── raw/                # Raw data (downloaded via make)
+│   ├── processed/          # Processed pickle files (generated via make)
 │   └── figures/            # Static analysis figures
 ├── img/                    # Images used in README (e.g., sketches)
 ├── notebooks/              # Jupyter Notebooks for EDA and prototyping
 ├── reports/                # Project proposals and reports
 ├── src/                    # Source code
-│   ├── app.py              # Main entry point for the Shiny App
+│   ├── __init__.py         # Marks src as a Python package
+│   ├── app.py              # Main entry point for the Shiny App; server logic
+│   ├── data_count.py       # Data summary/count helper functions
 │   ├── data_loader.py      # Script to download and update the database
-│   └── data_processor.py   # Script to clean and transform data
-├── environment.yml         # Conda environment configuration
+│   ├── data_processor.py   # Script to clean and transform data
+│   ├── map.py              # Map-building logic for geographic visualizations
+│   ├── plot.py             # Altair chart builder for monthly  temperature
+│   ├── ui.py               # Frontend layout, inputs, and page assembly
+│   └── utils.py            # Data loading, pre-aggregation (yearly, seasonal, monthly), global UI config
+├── CHANGELOG.md            # Record of notable project changes
+├── CODE_OF_CONDUCT.md      # Community and collaboration expectations
+├── CONTRIBUTING.md         # Contribution guidelines for collaborators
+├── LICENSE                 # Project license
 ├── Makefile                # Project automation scripts
-└── README.md               # Main project documentation
+├── README.md               # Main project documentation
+├── description.md          # Project description and assignment context
+├── environment.yml         # Conda environment configuration
+├── link-to-release.ipynb   # Notebook for release-related deliverables
+├── requirements.txt        # Python package dependencies
+└── team.txt                # Team member information
 
 ```
 
-## Installation
+### Installation
 
 This project uses `conda` for dependency management. Ensure you have Anaconda or Miniconda installed.
 
 ```bash
 # Clone the repository
-$ git clone https://github.com/UBC-MDS/DSCI-532_2026_26_TBD.git
+$ git clone https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales.git
 
 # Navigate to the project directory
-$ cd DSCI-532_2026_26_TBD
+$ cd DSCI-532_2026_26_TempTales
 
 # Create the environment using Makefile
 $ make install
 ```
 
-## Usage (Makefile Guide)
+### Usage (Makefile Guide)
 
 This project uses `make` to automate common tasks. Below is a guide to the available commands:
 
-### Initialization
+#### Initialization
 
 Before running the app for the first time, you must download and process the data:
 
@@ -84,7 +124,7 @@ $ make db
 
 This command runs `src/data_loader.py` to download the data and `src/data_processor.py` to convert it into the required format.
 
-### Running the App
+#### Running the App
 
 To start the **Shiny** app in development mode:
 
@@ -94,7 +134,7 @@ $ make run
 
 This enables reload mode (auto-restart on file save) and automatically launches the app in your browser.
 
-### Cleaning Data
+#### Cleaning Data
 
 If you need to reset the data environment (delete all raw and processed data files):
 
@@ -104,7 +144,7 @@ $ make clean
 
 **Note**: This command will prompt for confirmation (`y/N`) to prevent accidental deletion.
 
-## Developer Setup
+### Developer Setup
 
 If you wish to contribute to the project, please follow these steps:
 
@@ -113,7 +153,7 @@ If you wish to contribute to the project, please follow these steps:
 3. Activate the environment: `conda activate 532_project`.
 4. Run the app locally using `make run` to test changes.
 
-## Contributing
+### Contributing
 
 Contributors are expected to follow the guidelines outlined in **[CONTRIBUTING.md](./CONTRIBUTING.md)**. Please review this document before submitting issues or pull requests.
 
