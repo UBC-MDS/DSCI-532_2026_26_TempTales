@@ -60,6 +60,12 @@ def build_temp_chart(
     )
     month_scale = alt.Scale(domain=[0.5, 12.5])
 
+    temp_min = chart_data["Temperature"].min()
+    temp_max = chart_data["Temperature"].max()
+    padding = max((temp_max - temp_min) * 0.1, 2) if temp_max > temp_min else 2
+    temp_domain = [temp_min - padding, temp_max + padding]
+    temp_scale = alt.Scale(domain=temp_domain, nice=True)
+
     line_chart = (
         alt.Chart(chart_data)
         .mark_line(
@@ -70,7 +76,7 @@ def build_temp_chart(
         .encode(
             x=alt.X("month_num:Q", axis=month_axis,
                     scale=month_scale, title="Month"),
-            y=alt.Y("Temperature:Q", title="Temperature (°C)"),
+            y=alt.Y("Temperature:Q", title="Temperature (°C)", scale=temp_scale),
             color=alt.Color(
                 "Year:N",
                 scale=alt.Scale(range=["#2C7A7B", "#38B2AC"]),
@@ -88,7 +94,7 @@ def build_temp_chart(
         .mark_point(opacity=0, size=200)
         .encode(
             x=alt.X("month_num:Q", scale=month_scale),
-            y=alt.Y(str(b), type="quantitative"),
+            y=alt.Y(str(b), type="quantitative", scale=temp_scale),
             tooltip=[
                 alt.Tooltip("Month:N", title="Month"),
                 alt.Tooltip(str(b), type="quantitative",
