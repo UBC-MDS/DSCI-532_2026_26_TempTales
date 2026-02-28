@@ -3,35 +3,23 @@ import pandas as pd
 from pathlib import Path
 
 
-def get_season(month: int) -> str:
-    """Map month to season name."""
-    if month in [12, 1, 2]:
-        return "Winter"
-    elif month in [3, 4, 5]:
-        return "Spring"
-    elif month in [6, 7, 8]:
-        return "Summer"
-    else:
-        return "Fall"
-
-
 def process_and_save_data(
     raw_path: Path = Path("data/raw/GlobalLandTemperaturesByCountry.csv"),
     output_dir: Path = Path("data/processed")
 ) -> None:
     """
-    Reads raw climate data, processes it into a unified monthly dataframe,
-    and saves the result as a pickle file for high-performance loading.
+    Reads raw climate data, processes it into yearly and seasonal aggregations, 
+    and saves the results as pickle files for high-performance loading.
 
     Args:
-        raw_path (Path):
+        raw_path (Path): 
             Path to the raw GlobalLandTemperaturesByCountry.csv file.
-        output_dir (Path):
-            Directory where the processed .pkl file will be saved.
+        output_dir (Path): 
+            Directory where the processed .pkl files will be saved.
 
     Output Files:
-        - df_processed.pkl: Unified dataframe with columns
-          year | month | country | AvgTemp | AvgUncertain | season
+        - df_yearly.pkl: Aggregated yearly data with confidence intervals.
+        - df_seasonal.pkl: Aggregated seasonal data.
     """
 
     # Ensure output directory exists
@@ -45,21 +33,43 @@ def process_and_save_data(
     # Filter for relevant timeframe
     df = df[(df["year"] >= 1860)]
 
-    # Build unified dataframe with standardized column names
-    df_processed = df.rename(columns={
-        "AverageTemperature": "AvgTemp",
-        "AverageTemperatureUncertainty": "AvgUncertain",
-        "Country": "country"
-    })
+    # Yearly Aggregation
+    df_yearly = df.groupby(["year", "Country"], as_index=False).agg(
+        avg_temp=("AverageTemperature", "mean"),
+        avg_uncertainty=("AverageTemperatureUncertainty", "mean"),
+        data_coount=("AverageTemperature", "count")
+    )
 
-    df_processed["season"] = df_processed["month"].apply(get_season)
+    # Calculate 95% Confidence Interval proxies (Upper/Lower bounds)
+    df_yearly["temp_lower"] = df_yearly["avg_temp"] - \
+        df_yearly["avg_uncertainty"]
+    df_yearly["temp_upper"] = df_yearly["avg_temp"] + \
+        df_yearly["avg_uncertainty"]
 
-    # Keep only required columns
-    df_processed = df_processed[["year", "month", "country", "AvgTemp", "AvgUncertain", "season"]]
+    # Seasonal Aggregation
+    def get_season(month):
+        if month in [12, 1, 2]:
+            return "Winter"
+        elif month in [3, 4, 5]:
+            return "Spring"
+        elif month in [6, 7, 8]:
+            return "Summer"
+        else:
+            return "Fall"
+
+    df_seasonal_source = df.copy()
+    df_seasonal_source["season"] = df_seasonal_source["month"].apply(
+        get_season)
+
+    df_seasonal = df_seasonal_source.groupby(
+        ["year", "Country", "season"], as_index=False
+    )["AverageTemperature"].mean()
 
     print("Saving to pickle...")
+    # 4. Save to Disk
     # Use pickle for fast I/O and data type preservation
-    df_processed.to_pickle(output_dir / "df_processed.pkl")
+    df_yearly.to_pickle(output_dir / "df_yearly.pkl")
+    df_seasonal.to_pickle(output_dir / "df_seasonal.pkl")
 
 
 if __name__ == "__main__":

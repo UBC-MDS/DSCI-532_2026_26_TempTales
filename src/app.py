@@ -16,7 +16,6 @@ from src.map import build_base_map, apply_country_highlight
 
 
 def server(input: Inputs, output: Outputs, session: Session):
-    # =============================
     # Reactive Filters
     # =============================
     @reactive.Calc
@@ -92,9 +91,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             return ui.div(err, class_="text-danger")
         return ui.div("Year range is valid.", class_="text-success")
 
-    # =============================
     # Data Count UI
-    # =============================
     @render.ui
     def data_count_ui():
         """Render the data count UI element"""
@@ -118,7 +115,6 @@ def server(input: Inputs, output: Outputs, session: Session):
     
     # =============================
     # Historical Event UI
-    # =============================
     @render.ui
     def event_ui():
         """Render historical context based on year range"""
@@ -154,7 +150,6 @@ def server(input: Inputs, output: Outputs, session: Session):
             class_="text-muted small mb-0"
         )
 
-    # =============================
     # Seasonal Temperature UI
     # =============================
     @render.data_frame
@@ -299,9 +294,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             data, b, t, input.country(), height=300
         )
 
-    # =============================
     # World Heatmap
-    # =============================
     all_countries = sorted(df_yearly["Country"].unique())
     initial_map = build_base_map(all_countries)
 
@@ -336,7 +329,4 @@ def server(input: Inputs, output: Outputs, session: Session):
         else:
             initial_map.update_geos(projection_scale=1.0)
 
-# =============================
-# Initialize the application
-# =============================
 app = App(app_ui, server)
