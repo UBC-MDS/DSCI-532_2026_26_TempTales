@@ -47,13 +47,13 @@ Changes are merged to `main` through a Pull Request. Each PR should include:
 ### Clone the repository
 
 ``` bash
-git clone https://github.com/UBC-MDS/DSCI-532_2026_26_TBD
+git clone https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales.git
 ```
 
 ### Create a new branch
 
 ``` bash
-git switch -c DSCI-532_2026_26_TBD
+git switch -c feature/<name>
 ```
 
 ### Commit changes
