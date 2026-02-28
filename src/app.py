@@ -11,6 +11,7 @@ import pandas as pd
 from .utils import df_yearly, df_seasonal, df_monthly, min_year, max_year
 from .ui import app_ui
 from .plot import build_temp_chart
+from .data_count import data_count_prep
 
 
 def server(input: Inputs, output: Outputs, session: Session):
@@ -136,12 +137,21 @@ def server(input: Inputs, output: Outputs, session: Session):
         ]
 
         text = "Historical Data View"
-        for start, end, desc in events:
-            if start <= t <= end:
-                text = f"{desc} ({start}-{end})"
-                break
+        list_events = []
 
-        return ui.p(f"{t}: {text}", class_="fw-bold")
+        for ev_s, ev_e, desc in events:
+            if b <= ev_s <= t or b <= ev_e <= t:
+                text = f"{ev_s}-{ev_e}: {desc}"
+                list_events.append(ui.tags.li(text))
+
+        if not list_events:
+            return ui.p("No major recorded events in selected range.",
+                        class_="text-muted small")
+
+        return ui.tags.ul(
+            *list_events,
+            class_="text-muted small mb-0"
+        )
 
     # =============================
     # Seasonal Temperature UI
