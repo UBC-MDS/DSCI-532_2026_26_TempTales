@@ -10,7 +10,7 @@ import pandas as pd
 # =====================================
 from .utils import df_yearly, df_seasonal, df_monthly, min_year, max_year
 from .ui import app_ui
-from plot import build_temp_chart
+from .plot import build_temp_chart
 
 
 def server(input: Inputs, output: Outputs, session: Session):
