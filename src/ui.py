@@ -4,6 +4,13 @@ from shinywidgets import output_widget
 from .utils import country_choices, min_year, max_year
 
 # ==========================================
+# 0. Footer Configuration (manual update on release)
+# ==========================================
+FOOTER_LAST_UPDATED = "2026-02-28"
+REPO_URL = "https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales"
+AUTHORS_LIST = ["Emily Jin", "Ian Gault", "Purity Jangaya", "Yusheng Li"]
+
+# ==========================================
 # 1. Define Inputs
 # ==========================================
 country_selector = ui.input_select(
@@ -120,18 +127,50 @@ right_area = ui.div(
 )
 
 # ==========================================
-# 6. Final App UI Assembly
+# 6. Footer (authors, repo link, last updated; fixed at bottom)
+# ==========================================
+author_spans = []
+for i, name in enumerate(AUTHORS_LIST):
+    author_spans.append(ui.span(name, class_="me-2"))
+    if i < len(AUTHORS_LIST) - 1:
+        author_spans.append(ui.span("·", class_="mx-2 text-muted"))
+
+app_footer = ui.tags.footer(
+    ui.div(
+        ui.span(*author_spans, class_="d-inline-flex align-items-center me-2"),
+        ui.span("·", class_="mx-2 text-muted d-none d-sm-inline"),
+        ui.a(
+            "Repository", 
+            href=REPO_URL, 
+            target="_blank", 
+            rel="noopener noreferrer", 
+            class_="text-decoration-none me-2"
+        ),
+        ui.span("·", class_="mx-2 text-muted d-none d-sm-inline"),
+        ui.span(f"Last updated: {FOOTER_LAST_UPDATED}", class_="text-muted small"),
+        class_="d-flex align-items-center justify-content-center flex-wrap gap-1 gap-sm-2 py-2 px-3"
+    ),
+    class_="border-top bg-light",
+    style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; font-size: 0.875rem;"
+)
+
+# ==========================================
+# 7. Final App UI Assembly
 # ==========================================
 main_content = ui.div(
-    ui.output_ui("title_placeholder"),  # <-- just render the div directly
+    ui.output_ui("title_placeholder"),
     ui.layout_columns(
         left_column,
         right_area,
         col_widths=[3, 9]
-    )
+    ),
+    style="padding-bottom: 50px;"  # prevent content from hiding under fixed footer
 )
 
 app_ui = ui.page_sidebar(
     app_sidebar,
-    main_content
+    ui.div(
+        main_content,
+        app_footer
+    )
 )
