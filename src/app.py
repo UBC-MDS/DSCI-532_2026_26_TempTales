@@ -8,8 +8,8 @@ import pandas as pd
 # =====================================
 # Import shared data, UI layout, and plot builders
 # =====================================
-from utils import df_yearly, df_seasonal, df_monthly, min_year, max_year
-from ui import app_ui
+from .utils import df_yearly, df_seasonal, df_monthly, min_year, max_year
+from .ui import app_ui
 from plot import build_temp_chart
 
 
