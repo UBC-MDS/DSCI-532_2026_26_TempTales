@@ -157,50 +157,80 @@ def server(input: Inputs, output: Outputs, session: Session):
     # =============================
     # Seasonal Temperature UI
     # =============================
-    @render.ui
+    @render.data_frame
     def seasonal_temp_ui():
-        """Render the seasonal temperature UI element"""
+        """Render a table comparing seasonal temperatures for baseline vs target year."""
 
-        # Guard against invalid year inputs
         b, t, err = selected_range()
         if err:
-            return
+            return render.DataGrid(pd.DataFrame({"Message": ["Invalid year selection"]}))
 
-        mask = (df_seasonal["Country"] == input.country()) & (
-            df_seasonal["year"] == t)
-        curr_data = df_seasonal[mask]
+        country = input.country()
+        df_b = df_seasonal[(df_seasonal["Country"] == country) & (df_seasonal["year"] == b)]
+        df_t = df_seasonal[(df_seasonal["Country"] == country) & (df_seasonal["year"] == t)]
 
-        if curr_data.empty:
-            return ui.p("Seasonal data not available.")
-
+        seasons = ["Spring", "Summer", "Fall", "Winter"]
         rows = []
-        for season in ["Spring", "Summer", "Fall", "Winter"]:
-            row = curr_data[curr_data["season"] == season]
-            if not row.empty:
-                val = row.iloc[0]["AverageTemperature"]
-                val_str = f"{val:.1f}°C"
-            else:
-                val_str = "N/A"
 
-            rows.append(ui.div(
-                ui.span(season, class_="fw-bold"),
-                ui.span(val_str, class_="float-end"),
-                class_="border-bottom py-1"
-            ))
+        for season in seasons:
+            val_b = df_b[df_b["season"] == season]["AverageTemperature"]
+            val_t = df_t[df_t["season"] == season]["AverageTemperature"]
 
-        return ui.div(*rows)
+            temp_b = round(val_b.iloc[0], 1) if not val_b.empty else None
+            temp_t = round(val_t.iloc[0], 1) if not val_t.empty else None
+            change = None
+            if temp_b is not None and temp_t is not None:
+                change = round(temp_t - temp_b, 1)
+
+            rows.append({
+                "Season": season,
+                str(b): temp_b if temp_b is not None else "N/A",
+                str(t): temp_t if temp_t is not None else "N/A",
+                "Change": change
+            })
+
+        df_table = pd.DataFrame(rows)
+
+        # Color-code the Change column (warming red, cooling blue)
+        styles = []
+        if "Change" in df_table.columns:
+            change_col = df_table.columns.get_loc("Change")
+            for i, val in enumerate(df_table["Change"]):
+                if pd.isna(val):
+                    continue
+                if val > 0:
+                    styles.append({
+                        "rows": [i],
+                        "cols": [change_col],
+                        "style": {"color": "#c0392b", "backgroundColor": "rgba(231, 76, 60, 0.15)"}
+                    })
+                elif val < 0:
+                    styles.append({
+                        "rows": [i],
+                        "cols": [change_col],
+                        "style": {"color": "#2980b9", "backgroundColor": "rgba(52, 152, 219, 0.15)"}
+                    })
+
+        return render.DataGrid(df_table, selection_mode="none", styles=styles)
 
     # =============================
     # Title Placeholder (Value Box)
     # =============================
     @render.ui
     def title_placeholder():
-        # Guard against invalid year inputs
         b, t, err = selected_range()
         if err:
-            return ...
+            return ui.div("Invalid year selection", class_="text-danger fw-bold")
 
-        return f"{b} to {t}"
+        country = input.country()
+        
+        # Compact horizontal title line
+        title_text = f"TempTales — {country}: {b} vs {t} (Temperature Comparison)"
+        
+        return ui.div(
+            ui.h5(title_text, class_="fw-bold text-dark mb-0"),
+            class_="p-2"
+        )
 
     # =============================
     # Data Table (Monthly Comparison)

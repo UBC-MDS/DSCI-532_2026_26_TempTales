@@ -48,15 +48,6 @@ app_sidebar = ui.sidebar(
 )
 
 # ==========================================
-# 3. Define Title Placeholder (Value Box)
-# ==========================================
-title_value_box = ui.value_box(
-    "TempTales",
-    ui.output_ui("title_placeholder"),
-    theme="primary"
-)
-
-# ==========================================
 # 4. Define Left Column Cards
 # ==========================================
 data_count_card = ui.card(
@@ -73,7 +64,7 @@ event_card = ui.card(
 
 seasonal_temp_card = ui.card(
     ui.card_header("Seasonal Temperature"),
-    ui.output_ui("seasonal_temp_ui"),
+    ui.output_data_frame("seasonal_temp_ui"),
     class_="mb-3"
 )
 
@@ -132,7 +123,7 @@ right_area = ui.div(
 # 6. Final App UI Assembly
 # ==========================================
 main_content = ui.div(
-    title_value_box,
+    ui.output_ui("title_placeholder"),  # <-- just render the div directly
     ui.layout_columns(
         left_column,
         right_area,
