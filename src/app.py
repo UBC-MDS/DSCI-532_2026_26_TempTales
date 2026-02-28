@@ -12,6 +12,7 @@ from src.utils import df_yearly, df_seasonal, df_monthly, min_year, max_year
 from src.ui import app_ui
 from src.plot import build_temp_chart
 from src.data_count import data_count_prep
+from src.map import build_base_map, apply_country_highlight
 
 
 def server(input: Inputs, output: Outputs, session: Session):
@@ -272,32 +273,12 @@ def server(input: Inputs, output: Outputs, session: Session):
     # World Heatmap
     # =============================
     all_countries = sorted(df_yearly["Country"].unique())
-    empty_z = [None] * len(all_countries)
-
-    initial_map = go.FigureWidget(data=go.Choropleth(
-        locations=all_countries,
-        locationmode='country names',
-        z=empty_z,
-        colorscale='RdBu_r',
-        zmin=-20, zmax=30,
-        marker_line_color='darkgray',
-        marker_line_width=0.5,
-        colorbar_title="Temp (°C)"
-    ))
-
-    initial_map.update_layout(
-        geo=dict(
-            showframe=False, showcoastlines=True,
-            projection_type='robinson',
-            showland=True, landcolor="lightgray",
-            showocean=True, oceancolor="lightblue"
-        ),
-        margin=dict(l=0, r=0, t=0, b=0),
-    )
+    initial_map = build_base_map(all_countries)
 
     @render_widget
     def map_plot():
         """Render the global choropleth map for the selected year"""
+        initial_map.update_layout(autosize=True)
         return initial_map
 
     @reactive.Effect
@@ -305,18 +286,25 @@ def server(input: Inputs, output: Outputs, session: Session):
         b, t, err = selected_range()
         if err:
             return
+        
+        selected_country = input.country()
+
+        # --- update temperature values ---
         df_curr = df_yearly[df_yearly["year"] == t]
         df_curr_indexed = df_curr.set_index("Country")
-
         df_aligned = df_curr_indexed.reindex(all_countries)
-
         new_z = df_aligned["avg_temp"].values
 
         initial_map.data[0].z = new_z
 
-        if input.map_projection() != initial_map.layout.geo.projection.type:
-            initial_map.layout.geo.projection.type = input.map_projection()
+        # --- highlight selected country ---
+        apply_country_highlight(initial_map, all_countries, selected_country)
 
+        # --- zoom select country ---
+        if selected_country:
+            initial_map.update_geos(projection_scale=2.0, fitbounds="locations")
+        else:
+            initial_map.update_geos(projection_scale=1.0)
 
 # =============================
 # Initialize the application

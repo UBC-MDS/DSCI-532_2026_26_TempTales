@@ -33,19 +33,6 @@ target_year_input = ui.input_numeric(
     width="100%"
 )
 
-map_projection_selector = ui.input_select(
-    "map_projection",
-    None,
-    choices=[
-        "equirectangular",
-        "natural earth",
-        "orthographic",
-        "robinson",
-        "mercator"
-    ],
-    selected="robinson",
-    width="100%"
-)
 
 # ==========================================
 # 2. Define Sidebar (Collapsible)
@@ -99,19 +86,16 @@ left_column = ui.div(
 # ==========================================
 # 5. Define Right Area Cards
 # ==========================================
-map_selector_container = ui.div(
-    map_projection_selector,
-    class_="d-flex justify-content-end",
-    style="width: 150px; margin-left: auto;"
-)
-
 map_plot_card = ui.card(
     ui.card_header("World Heatmap"),
-    map_selector_container,
-    output_widget("map_plot"),
+    ui.div(
+        output_widget("map_plot"),
+        style="height:100%; width:100%;"
+    ),
     height="500px",
     full_screen=True
 )
+
 
 temp_plot_card = ui.card(
     ui.card_header("Temperature Over Time"),
