@@ -62,15 +62,15 @@ flowchart TD
   end
 
   subgraph Outputs
-    TITLE([title])
+    TITLE([title_placeholder])
     VALID([year_validation_ui])
-    HIST([Historical Events])
+    HIST([event_ui])
     DC([data_count_ui])
-    ST([Seasonal Temp Table])
-    MLP([Monthly Line Chart])
-    DT([Data Table])
-    CSV([CSV Download])
-    WM([World Map])
+    ST([seasonal_temp_ui])
+    MLP([temp_plot])
+    DT([data_table])
+    CSV([download_table_csv])
+    WM([map_plot])
   end
 
   B --> SR
@@ -88,16 +88,21 @@ flowchart TD
   SR --> VALID
   SR --> HIST
   FG --> DC
+  SR --> DC
 
   C --> ST
   SR --> ST
   DS --> ST
 
   MC --> MLP
+  SR --> MLP
+  C --> MLP
+
   MC --> DT
+
   MC --> CSV
 
-  S --> WM
+  SR --> WM
   C --> WM
   DY --> WM
 ```
