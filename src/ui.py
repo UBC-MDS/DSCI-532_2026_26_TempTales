@@ -2,6 +2,7 @@
 from shiny import ui
 from shinywidgets import output_widget
 from .utils import country_choices, min_year, max_year
+from .chat import qc
 
 # ==========================================
 # 0. Footer Configuration (manual update on release)
@@ -84,6 +85,12 @@ left_column = ui.div(
 # ==========================================
 # 5. Define Right Area Cards
 # ==========================================
+querychat_card = ui.card(
+    ui.card_header("Ask the Data (AI Assistant)"), 
+    qc.ui(),
+    class_="mb-3"     
+)
+
 map_plot_card = ui.card(
     ui.card_header("World Heatmap"),
     ui.div(
@@ -118,6 +125,7 @@ table_card = ui.card(
 
 # Right area: Heatmap on top, Line plot + Table side-by-side (8:4)
 right_area = ui.div(
+    querychat_card,
     map_plot_card,
     ui.layout_columns(
         temp_plot_card,
