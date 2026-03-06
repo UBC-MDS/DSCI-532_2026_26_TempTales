@@ -82,8 +82,8 @@ def build_temp_chart(
                 scale=alt.Scale(range=["#2C7A7B", "#38B2AC"]),
                 legend=alt.Legend(
                     title=None,
-                    orient="right",
-                    direction="vertical"
+                    orient="bottom",
+                    direction="horizontal",
                 )
             )
         )
@@ -126,6 +126,9 @@ def build_temp_chart(
         )
         .configure_axis(grid=True, gridOpacity=0.3)
         .configure_view(strokeWidth=0)
-        .configure_legend(orient="right", direction="vertical", padding=4, symbolSize=40)
+        .configure_legend(
+            padding=4,
+            symbolSize=40,
+        )
     )
     return chart
