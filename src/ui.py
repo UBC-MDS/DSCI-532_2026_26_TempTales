@@ -91,22 +91,26 @@ querychat_card = ui.card(
     class_="mb-3"     
 )
 
+# Right column: row ratio 7:3 (charts : table), heatmap:line 1:1
 map_plot_card = ui.card(
     ui.card_header("World Heatmap"),
     ui.div(
         output_widget("map_plot"),
-        style="height:100%; width:100%;"
+        style="height:100%; width:100%; min-height: 0;"
     ),
-    height="500px",
+    style="height: 100%; display: flex; flex-direction: column; min-height: 0;",
+    class_="h-100",
     full_screen=True
 )
 
-
 temp_plot_card = ui.card(
     ui.card_header("Temperature Over Time"),
-    output_widget("temp_plot"),
-    height="450px",
-    class_="mb-3",
+    ui.div(
+        output_widget("temp_plot"),
+        style="height:100%; width:100%; min-height: 0; flex: 1;"
+    ),
+    style="height: 100%; display: flex; flex-direction: column; min-height: 0;",
+    class_="h-100",
     full_screen=True
 )
 
@@ -118,20 +122,33 @@ table_card = ui.card(
             class_="d-flex justify-content-between align-items-center w-100"
         )
     ),
-    ui.output_data_frame("data_table"),
-    height="300px",
+    ui.div(
+        ui.output_data_frame("data_table"),
+        class_="data-table-compact"
+    ),
+    style="min-height: 0; flex: 1;",
     class_="mb-3"
 )
 
-# Right area: Heatmap on top, Line plot + Table side-by-side (8:4)
-right_area = ui.div(
-    querychat_card,
+# Top section (70%): heatmap 4 + line 6, bottom-aligned; Bottom section (30%): table
+charts_row = ui.layout_columns(
     map_plot_card,
-    ui.layout_columns(
-        temp_plot_card,
+    temp_plot_card,
+    col_widths=[6, 6],
+    row_heights="1fr",
+    fill=True,
+)
+
+right_area = ui.div(
+    ui.div(
+        charts_row,
+        style="flex: 7; min-height: 0; display: flex; flex-direction: column;"
+    ),
+    ui.div(
         table_card,
-        col_widths=[8, 4]
-    )
+        style="flex: 3; min-height: 0; display: flex; flex-direction: column; overflow: hidden;"
+    ),
+    style="display: flex; flex-direction: column; min-height: 55vh;"
 )
 
 # ==========================================
@@ -148,10 +165,10 @@ app_footer = ui.tags.footer(
         ui.span(*author_spans, class_="d-inline-flex align-items-center me-2"),
         ui.span("·", class_="mx-2 text-muted d-none d-sm-inline"),
         ui.a(
-            "Repository", 
-            href=REPO_URL, 
-            target="_blank", 
-            rel="noopener noreferrer", 
+            "Repository",
+            href=REPO_URL,
+            target="_blank",
+            rel="noopener noreferrer",
             class_="text-decoration-none me-2"
         ),
         ui.span("·", class_="mx-2 text-muted d-none d-sm-inline"),
@@ -163,22 +180,51 @@ app_footer = ui.tags.footer(
 )
 
 # ==========================================
-# 7. Final App UI Assembly
+# 7. Main Content (Dashboard tab)
 # ==========================================
 main_content = ui.div(
-    ui.output_ui("title_placeholder"),
     ui.layout_columns(
         left_column,
         right_area,
         col_widths=[3, 9]
-    ),
-    style="padding-bottom: 50px;"  # prevent content from hiding under fixed footer
+    )
 )
 
-app_ui = ui.page_sidebar(
-    app_sidebar,
-    ui.div(
-        main_content,
-        app_footer
+# ==========================================
+# AI Assistant tab: 3:9 layout, chatbox left, right empty
+# ==========================================
+ai_assistant_content = ui.layout_columns(
+    querychat_card,
+    ui.div(),
+    col_widths=[3, 9]
+)
+
+# ==========================================
+# 8. Data table compact styling (smaller font and padding)
+# ==========================================
+data_table_css = ui.tags.style("""
+    .data-table-compact { overflow-y: auto; }
+    .data-table-compact .shiny-data-frame-output,
+    .data-table-compact [class*="data-frame"],
+    .data-table-compact table { font-size: 0.7rem !important; }
+    .data-table-compact th,
+    .data-table-compact td { padding: 0.15rem 0.35rem !important; }
+""")
+
+# ==========================================
+# 9. Final App UI Assembly (page_navbar with tabs)
+# Footer in page_navbar so it appears on both Dashboard and AI Assistant
+# ==========================================
+app_ui = ui.TagList(
+    data_table_css,
+    ui.page_navbar(
+        ui.nav_panel("Dashboard", main_content, value="dashboard"),
+        ui.nav_panel("AI Assistant", ai_assistant_content, value="ai_assistant"),
+        title=ui.output_ui("title_placeholder"),
+        id="main_nav",
+        sidebar=app_sidebar,
+        footer=app_footer,
+        fillable=True,
+        padding=[10, 10, 60, 10],
     )
 )

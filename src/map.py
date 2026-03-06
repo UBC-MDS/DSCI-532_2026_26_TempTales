@@ -11,23 +11,38 @@ def build_base_map(all_countries):
         zmin=-20, zmax=30,
         marker_line_color='darkgray',
         marker_line_width=0.5,
-        colorbar_title="Temp (°C)"
+        colorbar=dict(
+            title="Temp (°C)",
+            orientation="h",
+            len=0.7,
+            lenmode="fraction",
+            thickness=12,
+            x=0.5,
+            xanchor="center",
+            y=-0.08,
+            yanchor="top",
+        )
     ))
 
     fig.update_layout(
         geo=dict(
             showframe=False,
             showcoastlines=True,
-            #projection_type='robinson',
+            coastlinecolor="darkgray",
             showland=True,
-            landcolor="lightgray",
-            showocean=True,
-            oceancolor="lightblue"
+            landcolor="#eaeaea",
+            showocean=False,
+            showlakes=False,
+            bgcolor="rgba(0,0,0,0)",
+            projection=dict(type="natural earth"),
+            fitbounds="locations",
         ),
-        margin=dict(l=0, r=0, t=0, b=0),
+        margin=dict(l=0, r=0, t=0, b=30),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
         autosize=True,
         height=None,
-        width=None
+        width=None,
     )
 
     return fig
