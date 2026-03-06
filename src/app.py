@@ -5,6 +5,8 @@ from shinywidgets import render_altair, render_plotly, render_widget
 import plotly.graph_objects as go
 import pandas as pd
 
+from src.chat import qc
+
 # =====================================
 # Import shared data, UI layout, and plot builders
 # =====================================
@@ -115,6 +117,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     
     # =============================
     # Historical Event UI
+    # =============================
     @render.ui
     def event_ui():
         """Render historical context based on year range"""
@@ -328,5 +331,8 @@ def server(input: Inputs, output: Outputs, session: Session):
             initial_map.update_geos(projection_scale=2.0, fitbounds="locations")
         else:
             initial_map.update_geos(projection_scale=1.0)
+    
+    # Attach QueryChat server to the app
+    qc.server()
 
 app = App(app_ui, server)

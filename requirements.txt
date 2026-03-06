@@ -18,3 +18,7 @@ inspect-ai
 maplibre
 great-tables
 #keplergl
+chatlas
+python-dotenv
+shinychat
+querychat
