@@ -51,7 +51,7 @@ app_sidebar = ui.sidebar(
     target_year_input,
     ui.output_ui("year_validation_ui"),
     title="Filters",
-    open="desktop",
+    open="closed",
     id="app_sidebar",
 )
 
