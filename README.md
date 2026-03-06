@@ -110,7 +110,7 @@ $ make install
 
 Some features of the dashboard (like the AI Assistant or QueryChat) require access to GitHub’s API. To set it up:
 
-1. Sign up at https://github.com/marketplace/models to get an API key.
+1. Sign up at <https://github.com/marketplace/models> to get an API key.
 2. In your project root, create a .env file if it doesn’t exist.
 3. Add your GitHub API key to .env:
 
