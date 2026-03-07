@@ -3,6 +3,7 @@ import io
 from shiny import App, Inputs, Outputs, Session, reactive, render, ui
 from shinywidgets import render_altair, render_plotly, render_widget
 import plotly.graph_objects as go
+import altair as alt
 import pandas as pd
 
 from src.chat import qc
@@ -12,7 +13,7 @@ from src.chat import qc
 # =====================================
 from src.utils import df_yearly, df_seasonal, df_monthly, min_year, max_year
 from src.ui import app_ui
-from src.plot import build_temp_chart, build_yearly_plot
+from src.plot import build_temp_chart, build_yearly_plot, build_diff_plot
 from src.data_count import data_count_prep
 from src.map import build_base_map, apply_country_highlight
 
@@ -427,27 +428,65 @@ def server(input: Inputs, output: Outputs, session: Session):
     # =====================================
 
     @reactive.Calc
-    def ai_monthly_prep():
+    def ai_yearly_prep():
         df = ai_filtered_raw_data()
         if df.empty:
-            return pd.DataFrame()
-        df_yearly = df.groupby(["Country", "year"], as_index=False)["AvgTemp"].mean()
-        # center by country (subtracting long-term mean)
+            return pd.DataFrame(columns=["Country", "year", "AvgTemp", "AvgTemp_centered"])
+        df_yearly = df.groupby(["Country", "year"], 
+                               as_index=False)["AvgTemp"].mean()
         df_yearly["AvgTemp_centered"] = df_yearly.groupby("Country")["AvgTemp"].transform(lambda x: x - x.mean())
-        
-        return df_yearly
+        return df_yearly.head(3000)
 
     @render_widget
     def ai_centred_ts_plot():
-        df = ai_monthly_prep()
-        if df.empty: 
-            return None
+        df = ai_yearly_prep()
+        # Always return a valid plot even if empty
+        if df.empty:
+            return alt.Chart(pd.DataFrame(columns=["year", "AvgTemp_centered", "Country"])).mark_line()
         plot = build_yearly_plot(df)
         return plot
 
+    @reactive.Calc
+    def ai_monthly_diff_prep():
+        df = ai_filtered_raw_data()
+        if df.empty:
+            return None  # no user input yet
+
+        # Get years in the filtered df
+        years = sorted(df["year"].unique())
+        if len(years) == 1:
+            year1 = years[0]
+            year2 = df["year"].max()  # latest year in dataset
+        else:
+            year1, year2 = years[0], years[-1]  # min & max years
+
+        # Filter for the two years only
+        df_filtered = df[df["year"].isin([year1, year2])]
+
+        # Pivot to have one column per year for monthly comparison
+        df_pivot = df_filtered.pivot_table(
+            index=["Country", "month"],
+            columns="year",
+            values="AvgTemp"
+        ).reset_index()
+
+        # Rename columns for clarity
+        df_pivot = df_pivot.rename(columns={year1: "year1_temp", year2: "year2_temp"})
+
+        # Compute difference
+        df_pivot["AvgTemp_diff"] = df_pivot["year2_temp"] - df_pivot["year1_temp"]
+
+        # Keep only needed columns
+        return df_pivot[["Country", "month", "AvgTemp_diff"]]
+
     @render_widget
     def ai_monthly_change_plot():
-        pass
-
+        df = ai_monthly_diff_prep()
+        if df is None or df.empty:
+            return alt.Chart(pd.DataFrame(columns=["month", "AvgTemp_diff", "Country"])).mark_line()
+        
+        plot = build_diff_plot(df)
+        return plot
+    
 
 app = App(app_ui, server)

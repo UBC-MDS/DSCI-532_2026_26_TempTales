@@ -156,7 +156,27 @@ def build_yearly_plot(df_yearly: pd.DataFrame):
             width="container",
             title="Centered Yearly Avg Temperature by Country"
         )
-        .interactive()  # allows zooming & panning
+        .interactive() 
     )
 
     return plot
+
+def build_diff_plot(df_monthly_diff): 
+    plot = (
+            alt.Chart(df_monthly_diff)
+            .mark_line(point=True)
+            .encode(
+                x=alt.X("month:O", title="Month"),
+                y=alt.Y("AvgTemp_diff:Q", title="Monthly Avg Temp Difference (°C)"),
+                color=alt.Color("Country:N"),
+                tooltip=["Country", "month", "AvgTemp_diff"]
+            )
+            .properties(
+                height=300,
+                width="container",
+                title="Monthly Avg Temperature Difference by Country"
+            )
+            .interactive()
+        )
+    return plot
+
