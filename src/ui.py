@@ -164,8 +164,9 @@ querychat_card = ui.card(
     **Example queries**
     - Compare temperatures in Canada and Japan between 1950 and 2000  
     - Show Canada and United States from 1945 to 1997
+    - Show the temperatures in Canada, United States, Japan, Taiwan in 1930, 1956, 1997, 2000
     - Show the monthly temperature difference for Canada between 1930 and 1980  
-    - Compare temperature changes between two years  
+    - Compare temperature changes of Canada between 1900 and 2000  
 
     *Tip:* You can include multiple countries and years in your question.
     """),
