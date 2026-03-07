@@ -85,11 +85,6 @@ left_column = ui.div(
 # ==========================================
 # 5. Define Right Area Cards
 # ==========================================
-querychat_card = ui.card(
-    ui.card_header("Ask the Data (AI Assistant)"), 
-    qc.ui(),
-    class_="mb-3"     
-)
 
 # Right column: row ratio 7:3 (charts : table), heatmap:line 1:1
 map_plot_card = ui.card(
@@ -151,6 +146,68 @@ right_area = ui.div(
     style="display: flex; flex-direction: column; min-height: 55vh;"
 )
 
+
+# ==========================================
+# 7. AI Tab
+# ==========================================
+
+# Query chat card (LEFT COLUMN)
+querychat_card = ui.card(
+    ui.card_header("Ask the Data (AI Assistant)"), 
+    qc.ui(),
+    class_="mb-3"     
+)
+
+# AI Dataframe card (MIDDLE COLUMN)
+ai_data_frame_card = ui.card(
+    ui.card_header(
+        ui.div(
+            "Data Frame",
+            ui.download_button("download_ai_table_csv", "Export CSV", class_="btn-sm"),
+            class_="d-flex justify-content-between align-items-center w-100",
+        )
+    ),
+    ui.output_data_frame("ai_data_frame"),
+    class_="mb-3 h-100",
+)
+
+# AI Figures (RIGHT COLUMN)
+
+## a) AI Time Series with Centred Data
+ai_centred_series_card = ui.card(
+    ui.card_header("Time Series (Centred Data)"),
+    ui.div(
+        output_widget("ai_centred_ts_plot"),
+        style="height:100%; width:100%; min-height:0; flex: 1;",
+    ),
+    style="height: 100%; display: flex; flex-direction: column; min-height: 0;",
+    class_="h-100 mb-3",
+)
+
+## b) AI Temperature Changes Across Months
+ai_monthly_change_card = ui.card(
+    ui.card_header("Difference in Monthly Temperatures Between Reference and Target Years"),
+    ui.div(
+        output_widget("ai_monthly_change_plot"),
+        style="height:100%; width:100%; min-height:0; flex: 1;",
+    ),
+    style="height: 100%; display: flex; flex-direction: column; min-height: 0;",
+    class_="h-100",
+)
+
+## Combine figures
+ai_right_column = ui.div(
+    ui.div(
+        ai_centred_series_card,
+        style="flex: 1; min-height: 0; display: flex; flex-direction:column;"
+    ),
+    ui.div(
+        ai_monthly_change_card,
+        style="flex: 1; min-height: 0; display: flex; flex-direction:column;"
+    ),
+    style="display: flex; flex-direction:column; min-height: 65vh"
+)
+
 # ==========================================
 # 6. Footer (authors, repo link, last updated; fixed at bottom)
 # ==========================================
@@ -195,8 +252,10 @@ main_content = ui.div(
 # ==========================================
 ai_assistant_content = ui.layout_columns(
     querychat_card,
-    ui.div(),
-    col_widths=[3, 9]
+    ai_data_frame_card,
+    ai_right_column,
+    col_widths=[3, 4, 5]
+
 )
 
 # ==========================================
