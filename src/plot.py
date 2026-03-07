@@ -135,12 +135,27 @@ def build_temp_chart(
 
 
 def build_yearly_plot(df_yearly: pd.DataFrame): 
-    """_summary_
+    """
+    Create an Altair line chart showing centered yearly average temperatures.
+
+    The function plots the centered average temperature for each country
+    across years. Centering is performed beforehand by subtracting the
+    mean temperature of each country, allowing users to compare relative
+    temperature changes over time across multiple countries.
 
     Parameters
     ----------
-    data : pd.DataFrame
-        _description_
+    df_yearly : pd.DataFrame
+        DataFrame containing yearly temperature data with the following columns:
+        - "Country": Country name
+        - "year": Year of observation
+        - "AvgTemp_centered": Average temperature centered by country mean
+
+    Returns
+    -------
+    alt.Chart
+        An interactive Altair line chart showing centered yearly average
+        temperatures for the selected countries.
     """
     plot = (
         alt.Chart(df_yearly)
@@ -162,6 +177,31 @@ def build_yearly_plot(df_yearly: pd.DataFrame):
     return plot
 
 def build_diff_plot(df_monthly_diff): 
+    """
+    Create an Altair line chart showing differences in monthly temperatures
+    between two selected years.
+
+    The function visualizes the difference in average monthly temperatures
+    between a reference year and a target year for each country. Positive
+    values indicate warmer temperatures in the later year, while negative
+    values indicate cooler temperatures.
+
+    Parameters
+    ----------
+    df_monthly_diff : pd.DataFrame
+        DataFrame containing monthly temperature differences with the
+        following columns:
+        - "Country": Country name
+        - "month": Month of the year (1–12)
+        - "AvgTemp_diff": Difference in average temperature between the
+          two selected years
+
+    Returns
+    -------
+    alt.Chart
+        An interactive Altair line chart showing monthly temperature
+        differences for the selected countries.
+    """
     plot = (
             alt.Chart(df_monthly_diff)
             .mark_line(point=True)

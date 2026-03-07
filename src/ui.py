@@ -154,7 +154,27 @@ right_area = ui.div(
 # Query chat card (LEFT COLUMN)
 querychat_card = ui.card(
     ui.card_header("Ask the Data (AI Assistant)"), 
-    qc.ui(),
+    ui.markdown("""
+    **TempTales Climate Explorer 🌍**
+
+    Ask questions to explore historical temperature trends across countries.
+
+    *Dataset:* Monthly average temperatures for the **top 100 most populous countries (1860–2013)**.
+
+    **Example queries**
+    - Compare temperatures in Canada and Japan between 1950 and 2000  
+    - Show Canada and United States from 1945 to 1997
+    - Show the temperatures in Canada, United States, Japan, Taiwan in 1930, 1956, 1997, 2000
+    - Show the monthly temperature difference for Canada between 1930 and 1980  
+    - Compare temperature changes of Canada between 1900 and 2000  
+
+    *Tip:* You can include multiple countries and years in your question.
+    """),
+    # qc.ui(),
+    ui.div(
+        qc.ui(),
+        style="min-height:300px;"
+    ),
     class_="mb-3"     
 )
 
