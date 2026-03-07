@@ -30,11 +30,6 @@ chat = ctl.ChatGithub(
     """
 )
 
-# qc = QueryChat(
-#     df_yearly,
-#     "temperature_data",
-#     client=chat
-# )
 df_monthly["AvgTemp"] = np.round(df_monthly["AvgTemp"], 2)
 
 qc = QueryChat(

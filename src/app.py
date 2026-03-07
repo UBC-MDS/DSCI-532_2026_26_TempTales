@@ -399,7 +399,6 @@ def server(input: Inputs, output: Outputs, session: Session):
     def ai_filtered_raw_data():
         df = qc_vals.df()
         print("AI RETURN TYPE:", type(df))
-        # return df if isinstance(df, pd.DataFrame) else pd.DataFrame(df)
         if df is None:
             return pd.DataFrame()
         if isinstance(df, pd.DataFrame):
@@ -408,10 +407,8 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     @render.data_frame
     def ai_data_frame():
-        # return render.DataGrid(ai_filtered_raw_data(), selection_mode="none", height="100%")
         df = ai_filtered_raw_data()
         if df.empty:
-            # placeholder message
             return pd.DataFrame({"Message": ["Ask the AI a question to see results"]})
         return df
 
