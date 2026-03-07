@@ -132,3 +132,51 @@ def build_temp_chart(
         )
     )
     return chart
+
+
+def build_yearly_plot(df_yearly: pd.DataFrame): 
+    """_summary_
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        _description_
+    """
+    plot = (
+        alt.Chart(df_yearly)
+        .mark_line(point=True)
+        .encode(
+            x=alt.X("year:O", title="Year"), 
+            y=alt.Y("AvgTemp_centered:Q", title="Centered Avg Temp (°C)"),
+            color=alt.Color("Country:N"),
+            tooltip=["Country", "year", "AvgTemp_centered"]
+        )
+        .properties(
+            height=300,
+            width="container",
+            title="Centered Yearly Avg Temperature by Country"
+        )
+        .interactive() 
+    )
+
+    return plot
+
+def build_diff_plot(df_monthly_diff): 
+    plot = (
+            alt.Chart(df_monthly_diff)
+            .mark_line(point=True)
+            .encode(
+                x=alt.X("month:O", title="Month"),
+                y=alt.Y("AvgTemp_diff:Q", title="Monthly Avg Temp Difference (°C)"),
+                color=alt.Color("Country:N"),
+                tooltip=["Country", "month", "AvgTemp_diff"]
+            )
+            .properties(
+                height=300,
+                width="container",
+                title="Monthly Avg Temperature Difference by Country"
+            )
+            .interactive()
+        )
+    return plot
+
