@@ -18,6 +18,11 @@ from src.map import build_base_map, apply_country_highlight
 
 
 def server(input: Inputs, output: Outputs, session: Session):
+
+    # =====================================
+    # Main Dashboard Tab
+    # =====================================
+
     # Reactive Filters
     # =============================
     @reactive.Calc
@@ -147,7 +152,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             ui.h5(target_display_text, class_="text-primary"),
             ui.p(target_sub_text, class_="text-muted mb-0 small") 
         )
-    
+
     # =============================
     # Historical Event UI
     # =============================
@@ -254,10 +259,10 @@ def server(input: Inputs, output: Outputs, session: Session):
             return ui.div("Invalid year selection", class_="text-danger fw-bold")
 
         country = input.country()
-        
+
         # Compact horizontal title line (navbar-brand styling)
         title_text = f"TempTales — {country}: {b} vs {t} (Temperature Comparison)"
-        
+
         return ui.span(
             title_text,
             class_="navbar-brand fw-bold text-dark me-2"
@@ -353,7 +358,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         b, t, err = selected_range()
         if err:
             return
-        
+
         selected_country = input.country()
 
         # --- update temperature values ---
@@ -378,8 +383,48 @@ def server(input: Inputs, output: Outputs, session: Session):
                 projection=dict(type="natural earth"),
                 fitbounds="locations",
             )
-    
+
+    # =====================================
+    # AI Tab
+    # =====================================
+
     # Attach QueryChat server to the app
-    qc.server()
+    qc_vals = qc.server()
+
+    # =====================================
+    # Reactive Calcs for DF
+    # =====================================
+
+    @reactive.Calc
+    def ai_filtered_raw_data():
+        df = qc_vals.df()
+        return df if isinstance(df, pd.DataFrame) else pd.DataFrame(df)
+
+    @render.data_frame
+    def ai_data_frame():
+        return render.DataGrid(ai_filtered_raw_data(), selection_mode="none", height="100%")
+
+    @render.download(filename="ai_filtered_data.csv")
+    def download_ai_table_csv():
+        data = ai_filtered_raw_data()
+        if data.empty:
+            yield ""
+            return
+        buf = io.StringIO()
+        data.to_csv(buf, index=False)
+        yield buf.getvalue()
+
+    # =====================================
+    # AI Plots
+    # =====================================
+
+    @render_widget
+    def ai_centred_ts_plot():
+        pass
+
+    @render_widget
+    def ai_monthly_change_plot():
+        pass
+
 
 app = App(app_ui, server)
