@@ -12,7 +12,7 @@ from src.chat import qc
 # =====================================
 from src.utils import df_yearly, df_seasonal, df_monthly, min_year, max_year
 from src.ui import app_ui
-from src.plot import build_temp_chart
+from src.plot import build_temp_chart, build_yearly_plot
 from src.data_count import data_count_prep
 from src.map import build_base_map, apply_country_highlight
 
@@ -426,9 +426,24 @@ def server(input: Inputs, output: Outputs, session: Session):
     # AI Plots
     # =====================================
 
+    @reactive.Calc
+    def ai_monthly_prep():
+        df = ai_filtered_raw_data()
+        if df.empty:
+            return pd.DataFrame()
+        df_yearly = df.groupby(["Country", "year"], as_index=False)["AvgTemp"].mean()
+        # center by country (subtracting long-term mean)
+        df_yearly["AvgTemp_centered"] = df_yearly.groupby("Country")["AvgTemp"].transform(lambda x: x - x.mean())
+        
+        return df_yearly
+
     @render_widget
     def ai_centred_ts_plot():
-        pass
+        df = ai_monthly_prep()
+        if df.empty: 
+            return None
+        plot = build_yearly_plot(df)
+        return plot
 
     @render_widget
     def ai_monthly_change_plot():
