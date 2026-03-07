@@ -398,11 +398,22 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.Calc
     def ai_filtered_raw_data():
         df = qc_vals.df()
-        return df if isinstance(df, pd.DataFrame) else pd.DataFrame(df)
+        print("AI RETURN TYPE:", type(df))
+        # return df if isinstance(df, pd.DataFrame) else pd.DataFrame(df)
+        if df is None:
+            return pd.DataFrame()
+        if isinstance(df, pd.DataFrame):
+            return df
+        return pd.DataFrame(df)
 
     @render.data_frame
     def ai_data_frame():
-        return render.DataGrid(ai_filtered_raw_data(), selection_mode="none", height="100%")
+        # return render.DataGrid(ai_filtered_raw_data(), selection_mode="none", height="100%")
+        df = ai_filtered_raw_data()
+        if df.empty:
+            # placeholder message
+            return pd.DataFrame({"Message": ["Ask the AI a question to see results"]})
+        return df
 
     @render.download(filename="ai_filtered_data.csv")
     def download_ai_table_csv():
