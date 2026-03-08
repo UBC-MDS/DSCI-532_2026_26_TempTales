@@ -106,6 +106,18 @@ $ cd DSCI-532_2026_26_TempTales
 $ make install
 ```
 
+### Configure GitHub API Key
+
+Some features of the dashboard (like the AI Assistant or QueryChat) require access to GitHub’s API. To set it up:
+
+1. Sign up at <https://github.com/marketplace/models> to get an API key.
+2. In your project root, create a .env file if it doesn’t exist.
+3. Add your GitHub API key to .env:
+
+```bash
+GITHUB_API_KEY=your_github_api_key_here
+```
+
 ### Usage (Makefile Guide)
 
 This project uses `make` to automate common tasks. Below is a guide to the available commands:

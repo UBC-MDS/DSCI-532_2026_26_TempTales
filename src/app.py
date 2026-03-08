@@ -3,19 +3,27 @@ import io
 from shiny import App, Inputs, Outputs, Session, reactive, render, ui
 from shinywidgets import render_altair, render_plotly, render_widget
 import plotly.graph_objects as go
+import altair as alt
 import pandas as pd
+
+from src.chat import qc
 
 # =====================================
 # Import shared data, UI layout, and plot builders
 # =====================================
 from src.utils import df_yearly, df_seasonal, df_monthly, min_year, max_year
 from src.ui import app_ui
-from src.plot import build_temp_chart
+from src.plot import build_temp_chart, build_yearly_plot, build_diff_plot
 from src.data_count import data_count_prep
 from src.map import build_base_map, apply_country_highlight
 
 
 def server(input: Inputs, output: Outputs, session: Session):
+
+    # =====================================
+    # Main Dashboard Tab
+    # =====================================
+
     # Reactive Filters
     # =============================
     @reactive.Calc
@@ -59,7 +67,7 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     @reactive.Calc
     def monthly_comparison_data():
-        """Monthly avg temperature comparison for baseline vs target year (avg only)."""
+        """Monthly avg temperature comparison for baseline vs target year (long format for chart)."""
         b, t, err = selected_range()
         if err:
             return pd.DataFrame()
@@ -80,6 +88,39 @@ def server(input: Inputs, output: Outputs, session: Session):
         merged["Change"] = merged[f"{t}_avg"] - merged[f"{b}_avg"]
         merged["Month"] = merged["month"].map(lambda m: month_labels[m - 1])
         return merged[["Month", f"{b}_avg", f"{t}_avg", "Change"]].round(2)
+
+    @reactive.Calc
+    def monthly_comparison_wide():
+        """Monthly comparison in wide format: 3 rows x 12 columns (for data table)."""
+        data = monthly_comparison_data()
+        if data.empty:
+            return pd.DataFrame()
+
+        b, t, err = selected_range()
+        if err:
+            return pd.DataFrame()
+
+        base_col = f"{b}_avg"
+        target_col = f"{t}_avg"
+        month_labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+        baseline_vals = data[base_col].values
+        target_vals = data[target_col].values
+        change_vals = data["Change"].values
+
+        row_labels = ["Baseline (°C)", "Target (°C)", "Change (°C)"]
+        df_wide = pd.DataFrame(
+            {
+                "Metric": row_labels,
+                **{month_labels[i]: [
+                    round(baseline_vals[i], 2),
+                    round(target_vals[i], 2),
+                    round(change_vals[i], 2)
+                ] for i in range(12)}
+            }
+        )
+        return df_wide
 
     # =============================
     # Year Validation UI
@@ -112,9 +153,10 @@ def server(input: Inputs, output: Outputs, session: Session):
             ui.h5(target_display_text, class_="text-primary"),
             ui.p(target_sub_text, class_="text-muted mb-0 small") 
         )
-    
+
     # =============================
     # Historical Event UI
+    # =============================
     @render.ui
     def event_ui():
         """Render historical context based on year range"""
@@ -218,53 +260,61 @@ def server(input: Inputs, output: Outputs, session: Session):
             return ui.div("Invalid year selection", class_="text-danger fw-bold")
 
         country = input.country()
-        
-        # Compact horizontal title line
+
+        # Compact horizontal title line (navbar-brand styling)
         title_text = f"TempTales — {country}: {b} vs {t} (Temperature Comparison)"
-        
-        return ui.div(
-            ui.h5(title_text, class_="fw-bold text-dark mb-0"),
-            class_="p-2"
+
+        return ui.span(
+            title_text,
+            class_="navbar-brand fw-bold text-dark me-2"
         )
 
     # =============================
     # Data Table (Monthly Comparison)
     # =============================
-    def _table_styles(df: pd.DataFrame):
-        """Red (warmer) / blue (cooler) color scheme for Change column."""
-        if df.empty or "Change" not in df.columns:
+    def _table_styles_wide(df: pd.DataFrame):
+        """Red (warmer) / blue (cooler) for Change row (row 2)."""
+        if df.empty or df.shape[0] < 3:
             return []
-        change_col = df.columns.get_loc("Change")
         styles = []
-        for i, val in enumerate(df["Change"]):
-            if pd.isna(val):
-                continue
-            if val > 0:
-                styles.append({
-                    "rows": [i],
-                    "cols": [change_col],
-                    "style": {"color": "#c0392b", "backgroundColor": "rgba(231, 76, 60, 0.15)"}
-                })
-            elif val < 0:
-                styles.append({
-                    "rows": [i],
-                    "cols": [change_col],
-                    "style": {"color": "#2980b9", "backgroundColor": "rgba(52, 152, 219, 0.15)"}
-                })
+        for row_idx in [2]:
+            for col_idx in range(1, df.shape[1]):
+                try:
+                    val = df.iloc[row_idx, col_idx]
+                except (IndexError, KeyError):
+                    continue
+                if pd.isna(val):
+                    continue
+                try:
+                    val_num = float(val)
+                except (ValueError, TypeError):
+                    continue
+                if val_num > 0:
+                    styles.append({
+                        "rows": [row_idx],
+                        "cols": [col_idx],
+                        "style": {"color": "#c0392b", "backgroundColor": "rgba(231, 76, 60, 0.15)"}
+                    })
+                elif val_num < 0:
+                    styles.append({
+                        "rows": [row_idx],
+                        "cols": [col_idx],
+                        "style": {"color": "#2980b9", "backgroundColor": "rgba(52, 152, 219, 0.15)"}
+                    })
         return styles
 
     @render.data_frame
     def data_table():
-        """Table of monthly avg temperature comparison; supports data_view() for export."""
-        data = monthly_comparison_data()
+        """Table of monthly comparison in wide format (3 rows x 12 columns)."""
+        data = monthly_comparison_wide()
         if data.empty:
-            return render.DataGrid(pd.DataFrame(), selection_mode="rows")
-        return render.DataGrid(data, selection_mode="rows", styles=_table_styles)
+            return render.DataGrid(pd.DataFrame(), selection_mode="none")
+        return render.DataGrid(data, selection_mode="none", styles=_table_styles_wide, height="auto")
 
     @render.download(filename=lambda: _csv_download_filename())
     def download_table_csv():
-        """Export monthly comparison data as CSV."""
-        data = monthly_comparison_data()
+        """Export monthly comparison data (wide format) as CSV."""
+        data = monthly_comparison_wide()
         if data.empty:
             yield ""
             return
@@ -289,9 +339,9 @@ def server(input: Inputs, output: Outputs, session: Session):
         data = monthly_comparison_data()
         b, t, err = selected_range()
         if err:
-            return build_temp_chart(pd.DataFrame(), 0, 0, "", height=300)
+            return build_temp_chart(pd.DataFrame(), 0, 0, "", height=280)
         return build_temp_chart(
-            data, b, t, input.country(), height=300
+            data, b, t, input.country(), height=280
         )
 
     # World Heatmap
@@ -309,7 +359,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         b, t, err = selected_range()
         if err:
             return
-        
+
         selected_country = input.country()
 
         # --- update temperature values ---
@@ -325,8 +375,132 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         # --- zoom select country ---
         if selected_country:
-            initial_map.update_geos(projection_scale=2.0, fitbounds="locations")
+            initial_map.update_geos(
+                projection=dict(type="equirectangular", scale=2.0),
+                fitbounds="locations",
+            )
         else:
-            initial_map.update_geos(projection_scale=1.0)
+            initial_map.update_geos(
+                projection=dict(type="natural earth"),
+                fitbounds="locations",
+            )
+
+    # =====================================
+    # AI Tab
+    # =====================================
+
+    # Attach QueryChat server to the app
+    qc_vals = qc.server()
+
+    # =====================================
+    # Reactive Calcs for DF
+    # =====================================
+
+    @reactive.Calc
+    def ai_filtered_raw_data():
+        df = qc_vals.df()
+        print("AI RETURN TYPE:", type(df))
+        if df is None:
+            return pd.DataFrame()
+        if isinstance(df, pd.DataFrame):
+            return df
+        return pd.DataFrame(df)
+
+    @render.data_frame
+    def ai_data_frame():
+        df = ai_filtered_raw_data()
+        if df.empty:
+            return pd.DataFrame({"Message": ["Ask the AI a question to see results"]})
+        return df
+
+    @render.download(filename="ai_filtered_data.csv")
+    def download_ai_table_csv():
+        data = ai_filtered_raw_data()
+        if data.empty:
+            yield ""
+            return
+        buf = io.StringIO()
+        data.to_csv(buf, index=False)
+        yield buf.getvalue()
+
+    # =====================================
+    # AI Plots
+    # =====================================
+
+    @reactive.Calc
+    def ai_yearly_prep():
+        df = ai_filtered_raw_data()
+        if df.empty:
+            return pd.DataFrame(columns=["Country", "year", "AvgTemp", "AvgTemp_centered"])
+        df_yearly = df.groupby(["Country", "year"], 
+                               as_index=False)["AvgTemp"].mean()
+        df_yearly["AvgTemp_centered"] = df_yearly.groupby("Country")["AvgTemp"].transform(lambda x: x - x.mean())
+
+        # deterministic country cap (instead of row cap)
+        max_countries = 20
+        country_order = sorted(df_yearly["Country"].unique())
+        keep_countries = country_order[:max_countries]
+        df_yearly = df_yearly[df_yearly["Country"].isin(keep_countries)]
+
+        return df_yearly
+
+
+    @render_widget
+    def ai_centred_ts_plot():
+        df = ai_yearly_prep()
+        # Always return a valid plot even if empty
+        if df.empty:
+            return alt.Chart(pd.DataFrame(columns=["year", "AvgTemp_centered", "Country"])).mark_line()
+        plot = build_yearly_plot(df)
+        return plot
+
+    @reactive.Calc
+    def ai_monthly_diff_prep():
+        df = ai_filtered_raw_data()
+
+        if df.empty:
+            return None  # no user input yet
+
+        max_countries = 20
+        country_order = sorted(df["Country"].unique())
+        keep_countries = country_order[:max_countries]
+        df = df[df["Country"].isin(keep_countries)]
+
+        # Get years in the filtered df
+        years = sorted(df["year"].unique())
+        if len(years) == 1:
+            year1 = years[0]
+            year2 = df["year"].max()  # latest year in dataset
+        else:
+            year1, year2 = years[0], years[-2]  # min & max years
+
+        # Filter for the two years only
+        df_filtered = df[df["year"].isin([year1, year2])]
+
+        # Pivot to have one column per year for monthly comparison
+        df_pivot = df_filtered.pivot_table(
+            index=["Country", "month"],
+            columns="year",
+            values="AvgTemp"
+        ).reset_index()
+
+        # Rename columns for clarity
+        df_pivot = df_pivot.rename(columns={year1: "year1_temp", year2: "year2_temp"})
+
+        # Compute difference
+        df_pivot["AvgTemp_diff"] = df_pivot["year2_temp"] - df_pivot["year1_temp"]
+
+        # Keep only needed columns
+        return df_pivot[["Country", "month", "AvgTemp_diff"]]
+
+    @render_widget
+    def ai_monthly_change_plot():
+        df = ai_monthly_diff_prep()
+        if df is None or df.empty:
+            return alt.Chart(pd.DataFrame(columns=["month", "AvgTemp_diff", "Country"])).mark_line()
+        
+        plot = build_diff_plot(df)
+        return plot
+    
 
 app = App(app_ui, server)
