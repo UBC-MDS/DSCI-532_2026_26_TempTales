@@ -221,29 +221,30 @@ def build_diff_plot(df_monthly_diff):
         An interactive Altair line chart showing monthly temperature
         differences for the selected countries.
     """
+
+    month_axis = alt.Axis(
+        title="Month",
+        values=list(range(1, 13)),
+        labelExpr="['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][datum.value-1]",
+    )
+
     plot = (
         alt.Chart(df_monthly_diff)
-        .transform_calculate(
-            month_name="['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][datum.month-1]"
-        )
         .mark_line(point=True)
         .encode(
             x=alt.X(
                 "month:Q",
-                title="Month",
-                scale=alt.Scale(domain=[1, 12], nice=False),
                 axis=alt.Axis(
                     values=list(range(1, 13)),
                     labelExpr="['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][datum.value-1]",
+                    labelAngle=-35
                 ),
+                scale=alt.Scale(domain=[1, 12], nice=False),
+                title="Month",
             ),
             y=alt.Y("AvgTemp_diff:Q", title="Monthly Avg Temp Difference (°C)"),
             color=alt.Color("Country:N"),
-            tooltip=[
-                "Country:N",
-                alt.Tooltip("month:Q", title="Month", format=".0f"),
-                "AvgTemp_diff",
-            ],
+            tooltip=["Country", "month", "AvgTemp_diff"],
         )
         .properties(
             height=300,
