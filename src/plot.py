@@ -158,6 +158,7 @@ def build_yearly_plot(df_yearly: pd.DataFrame):
         temperatures for the selected countries.
     """
 
+    # Adding x axis presentation
     years = sorted(pd.to_numeric(df_yearly["year"], errors="coerce").dropna().astype(int).unique())
     max_labels = 12
     step = max(1, len(years) // max_labels)
@@ -188,7 +189,6 @@ def build_yearly_plot(df_yearly: pd.DataFrame):
         .properties(
             height=300,
             width="container",
-            title="Centered Yearly Avg Temperature by Country",
         )
         .interactive()
     )
@@ -222,12 +222,6 @@ def build_diff_plot(df_monthly_diff):
         differences for the selected countries.
     """
 
-    month_axis = alt.Axis(
-        title="Month",
-        values=list(range(1, 13)),
-        labelExpr="['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][datum.value-1]",
-    )
-
     plot = (
         alt.Chart(df_monthly_diff)
         .mark_line(point=True)
@@ -249,7 +243,6 @@ def build_diff_plot(df_monthly_diff):
         .properties(
             height=300,
             width="container",
-            title="Monthly Avg Temperature Difference by Country",
         )
         .interactive()
     )

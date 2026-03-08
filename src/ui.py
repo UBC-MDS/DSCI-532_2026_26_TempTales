@@ -195,7 +195,7 @@ ai_data_frame_card = ui.card(
 
 ## a) AI Time Series with Centred Data
 ai_centred_series_card = ui.card(
-    ui.card_header("Time Series (Centred Data)"),
+    ui.card_header("Time Series of Centred Temperature Data by Country"),
     ui.div(
         output_widget("ai_centred_ts_plot"),
         style="height:100%; width:100%; min-height:0; flex: 1;",
