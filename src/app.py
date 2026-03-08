@@ -435,7 +435,15 @@ def server(input: Inputs, output: Outputs, session: Session):
         df_yearly = df.groupby(["Country", "year"], 
                                as_index=False)["AvgTemp"].mean()
         df_yearly["AvgTemp_centered"] = df_yearly.groupby("Country")["AvgTemp"].transform(lambda x: x - x.mean())
-        return df_yearly.head(3000)
+
+        # deterministic country cap (instead of row cap)
+        max_countries = 20
+        country_order = sorted(df_yearly["Country"].unique())
+        keep_countries = country_order[:max_countries]
+        df_yearly = df_yearly[df_yearly["Country"].isin(keep_countries)]
+
+        return df_yearly
+
 
     @render_widget
     def ai_centred_ts_plot():
@@ -449,8 +457,14 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.Calc
     def ai_monthly_diff_prep():
         df = ai_filtered_raw_data()
+
         if df.empty:
             return None  # no user input yet
+
+        max_countries = 20
+        country_order = sorted(df["Country"].unique())
+        keep_countries = country_order[:max_countries]
+        df = df[df["Country"].isin(keep_countries)]
 
         # Get years in the filtered df
         years = sorted(df["year"].unique())
@@ -458,7 +472,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             year1 = years[0]
             year2 = df["year"].max()  # latest year in dataset
         else:
-            year1, year2 = years[0], years[-1]  # min & max years
+            year1, year2 = years[0], years[-2]  # min & max years
 
         # Filter for the two years only
         df_filtered = df[df["year"].isin([year1, year2])]
