@@ -157,21 +157,40 @@ def build_yearly_plot(df_yearly: pd.DataFrame):
         An interactive Altair line chart showing centered yearly average
         temperatures for the selected countries.
     """
+
+    years = sorted(pd.to_numeric(df_yearly["year"], errors="coerce").dropna().astype(int).unique())
+    max_labels = 12
+    step = max(1, len(years) // max_labels)
+    year_ticks = years[::step]
+    if years[-1] not in year_ticks:
+        year_ticks.append(years[-1])
+
     plot = (
         alt.Chart(df_yearly)
         .mark_line(point=True)
         .encode(
-            x=alt.X("year:O", title="Year"), 
+            x=alt.X(
+                "year:Q",
+                title="Year",
+                axis=alt.Axis(
+                    values=year_ticks,
+                    format="d",
+                    labelAngle=-35 if len(years) > 10 else 0)
+                ,
+                scale=alt.Scale(domain=[years[0],
+                                        years[-1]],
+                                        nice=False),
+            ),
             y=alt.Y("AvgTemp_centered:Q", title="Centered Avg Temp (°C)"),
             color=alt.Color("Country:N"),
-            tooltip=["Country", "year", "AvgTemp_centered"]
+            tooltip=["Country", "year", "AvgTemp_centered"],
         )
         .properties(
             height=300,
             width="container",
-            title="Centered Yearly Avg Temperature by Country"
+            title="Centered Yearly Avg Temperature by Country",
         )
-        .interactive() 
+        .interactive()
     )
 
     return plot
@@ -203,20 +222,34 @@ def build_diff_plot(df_monthly_diff):
         differences for the selected countries.
     """
     plot = (
-            alt.Chart(df_monthly_diff)
-            .mark_line(point=True)
-            .encode(
-                x=alt.X("month:O", title="Month"),
-                y=alt.Y("AvgTemp_diff:Q", title="Monthly Avg Temp Difference (°C)"),
-                color=alt.Color("Country:N"),
-                tooltip=["Country", "month", "AvgTemp_diff"]
-            )
-            .properties(
-                height=300,
-                width="container",
-                title="Monthly Avg Temperature Difference by Country"
-            )
-            .interactive()
+        alt.Chart(df_monthly_diff)
+        .transform_calculate(
+            month_name="['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][datum.month-1]"
         )
+        .mark_line(point=True)
+        .encode(
+            x=alt.X(
+                "month:Q",
+                title="Month",
+                scale=alt.Scale(domain=[1, 12], nice=False),
+                axis=alt.Axis(
+                    values=list(range(1, 13)),
+                    labelExpr="['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][datum.value-1]",
+                ),
+            ),
+            y=alt.Y("AvgTemp_diff:Q", title="Monthly Avg Temp Difference (°C)"),
+            color=alt.Color("Country:N"),
+            tooltip=[
+                "Country:N",
+                alt.Tooltip("month:Q", title="Month", format=".0f"),
+                "AvgTemp_diff",
+            ],
+        )
+        .properties(
+            height=300,
+            width="container",
+            title="Monthly Avg Temperature Difference by Country",
+        )
+        .interactive()
+    )
     return plot
-
