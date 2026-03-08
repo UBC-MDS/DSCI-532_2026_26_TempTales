@@ -5,7 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v0.2.0] (Unreleased)
+## [v0.3.0] (Unreleased)
+
+### Added
+
+- Implemented AI assistent tab with Chatbot and 3 output components
+   - Queried Data Frame
+   - *Time Series of Centred Temperature Data by Country* Plot
+   - *Difference in Monthly Temperatures Between Reference and Target Years* Plot
+
+### Changed
+
+- Updated Dashboard: 
+   - Re-arranged world heatmap, line plots and data table
+   - Changed Heatmap background to white and changed to smaller size
+   - Transposed data table (vertical to horizontal) for visual consistency
+
+### Fixed
+
+- N/A
+
+### Known Issues
+
+- N/A
+
+### Reflection
+
+- **Implemented AI Assistent Tab**
+- **Revision**
+    - updated dashboard tab layout based on Intructor's feedback
+- **Followup for M4** 
+    - close sidebar for user input/filters when in AI tab
+    - optimization for AI tab output (narrow down to smaller dataset)
+
+## [v0.2.0] (Milestone 2 - 2026-02-28)
 
 ### Added
 
