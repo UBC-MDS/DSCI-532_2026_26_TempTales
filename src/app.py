@@ -486,6 +486,10 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         # Rename columns for clarity
         df_pivot = df_pivot.rename(columns={year1: "year1_temp", year2: "year2_temp"})
+    
+        # Prevent crash if pivot didn't produce both columns
+        if "year1_temp" not in df_pivot.columns or "year2_temp" not in df_pivot.columns:
+            return None
 
         # Compute difference
         df_pivot["AvgTemp_diff"] = df_pivot["year2_temp"] - df_pivot["year1_temp"]
