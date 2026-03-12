@@ -88,7 +88,7 @@ left_column = ui.div(
 
 # Right column: row ratio 7:3 (charts : table), heatmap:line 1:1
 map_plot_card = ui.card(
-    ui.card_header("World Heatmap"),
+    ui.card_header(ui.output_ui("map_card_header")),
     ui.div(
         output_widget("map_plot"),
         style="height:100%; width:100%; min-height: 0;"
