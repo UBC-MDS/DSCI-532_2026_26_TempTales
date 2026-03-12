@@ -43,7 +43,7 @@ def process_and_save_data(
     df["month"] = df.index.month
 
     # Filter for relevant timeframe
-    df = df[(df["year"] >= 1860)]
+    df = df[(df["year"] >= 1860) & (df["year"] <= 2012)]
 
     # Build unified dataframe with standardized column names
     df_processed = df.rename(columns={
