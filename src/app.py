@@ -18,6 +18,53 @@ from src.data_count import data_count_prep
 from src.map import build_base_map, apply_country_highlight
 
 
+def _diverging_styles(cells: list[tuple[int, int, float]], alpha: float = 0.65) -> list[dict]:
+    """
+    Generate DataGrid styles for a diverging color scale (0=neutral, negative=blue, positive=red).
+    cells: list of (row_idx, col_idx, value)
+    alpha: background opacity (higher = deeper colors)
+    """
+    if not cells:
+        return []
+
+    vals = [v for _, _, v in cells]
+    low = min(min(vals), 0)
+    high = max(max(vals), 0)
+    eps = 1e-9
+    if high - low < eps:
+        high = low + eps
+
+    WHITE = (255, 255, 255)
+    BLUE = (41, 128, 185)
+    RED = (231, 76, 60)
+
+    def _interp(t: float, c0: tuple, c1: tuple) -> str:
+        r = int(c0[0] + t * (c1[0] - c0[0]))
+        g = int(c0[1] + t * (c1[1] - c0[1]))
+        b = int(c0[2] + t * (c1[2] - c0[2]))
+        return f"rgba({r},{g},{b},{alpha})"
+
+    styles = []
+    for row_idx, col_idx, val_num in cells:
+        if val_num < 0:
+            t = val_num / low if low < -eps else 0
+            t = max(0, min(1, t))
+            bg = _interp(t, WHITE, BLUE)
+        elif val_num > 0:
+            t = val_num / high if high > eps else 0
+            t = max(0, min(1, t))
+            bg = _interp(t, WHITE, RED)
+        else:
+            bg = "rgba(248,249,250,0.5)"
+
+        styles.append({
+            "rows": [row_idx],
+            "cols": [col_idx],
+            "style": {"color": "#333", "backgroundColor": bg}
+        })
+    return styles
+
+
 def server(input: Inputs, output: Outputs, session: Session):
 
     # =====================================
@@ -228,30 +275,21 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         df_table = pd.DataFrame(rows)
 
-        # Color-code the Change column (warming red, cooling blue)
-        styles = []
+        # Diverging gradient for Change column (reuse shared logic)
+        cells = []
         if "Change" in df_table.columns:
             change_col = df_table.columns.get_loc("Change")
             for i, val in enumerate(df_table["Change"]):
-                if pd.isna(val):
-                    continue
-                if val > 0:
-                    styles.append({
-                        "rows": [i],
-                        "cols": [change_col],
-                        "style": {"color": "#c0392b", "backgroundColor": "rgba(231, 76, 60, 0.15)"}
-                    })
-                elif val < 0:
-                    styles.append({
-                        "rows": [i],
-                        "cols": [change_col],
-                        "style": {"color": "#2980b9", "backgroundColor": "rgba(52, 152, 219, 0.15)"}
-                    })
-
+                if not pd.isna(val):
+                    try:
+                        cells.append((i, change_col, float(val)))
+                    except (ValueError, TypeError):
+                        pass
+        styles = _diverging_styles(cells)
         return render.DataGrid(df_table, selection_mode="none", styles=styles)
 
     # =============================
-    # Title Placeholder (Value Box)
+    # Title UI
     # =============================
     @render.ui
     def title_placeholder():
@@ -273,35 +311,23 @@ def server(input: Inputs, output: Outputs, session: Session):
     # Data Table (Monthly Comparison)
     # =============================
     def _table_styles_wide(df: pd.DataFrame):
-        """Red (warmer) / blue (cooler) for Change row (row 2)."""
+        """Diverging gradient for Change row (row 2): 0=neutral, negative=blue, positive=red."""
         if df.empty or df.shape[0] < 3:
             return []
-        styles = []
-        for row_idx in [2]:
-            for col_idx in range(1, df.shape[1]):
-                try:
-                    val = df.iloc[row_idx, col_idx]
-                except (IndexError, KeyError):
-                    continue
-                if pd.isna(val):
-                    continue
-                try:
-                    val_num = float(val)
-                except (ValueError, TypeError):
-                    continue
-                if val_num > 0:
-                    styles.append({
-                        "rows": [row_idx],
-                        "cols": [col_idx],
-                        "style": {"color": "#c0392b", "backgroundColor": "rgba(231, 76, 60, 0.15)"}
-                    })
-                elif val_num < 0:
-                    styles.append({
-                        "rows": [row_idx],
-                        "cols": [col_idx],
-                        "style": {"color": "#2980b9", "backgroundColor": "rgba(52, 152, 219, 0.15)"}
-                    })
-        return styles
+        row_idx = 2
+        cells = []
+        for col_idx in range(1, df.shape[1]):
+            try:
+                val = df.iloc[row_idx, col_idx]
+            except (IndexError, KeyError):
+                continue
+            if pd.isna(val):
+                continue
+            try:
+                cells.append((row_idx, col_idx, float(val)))
+            except (ValueError, TypeError):
+                continue
+        return _diverging_styles(cells)
 
     @render.data_frame
     def data_table():
@@ -343,11 +369,29 @@ def server(input: Inputs, output: Outputs, session: Session):
         return build_temp_chart(
             data, b, t, input.country(), height=280
         )
-
+    # =============================
     # World Heatmap
+    # =============================
+    
     all_countries = sorted(df_yearly["Country"].unique())
     initial_map = build_base_map(all_countries)
 
+    def _map_click(trace, points, state):
+        if points.point_inds:
+            idx = points.point_inds[0]
+            country = all_countries[idx]
+            ui.update_select("country", selected=country, session=session)
+            
+    initial_map.data[0].on_click(_map_click)
+    
+    @render.ui
+    def map_card_header():
+        b, t, err = selected_range()
+        if err:
+            return ui.span("World Heatmap")
+        country = input.country()
+        return ui.span(f"World Heatmap — {country}: {b} vs {t}")
+    
     @render_widget
     def map_plot():
         """Render the global choropleth map for the selected year"""
@@ -362,11 +406,13 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         selected_country = input.country()
 
-        # --- update temperature values ---
-        df_curr = df_yearly[df_yearly["year"] == t]
-        df_curr_indexed = df_curr.set_index("Country")
-        df_aligned = df_curr_indexed.reindex(all_countries)
-        new_z = df_aligned["avg_temp"].values
+        # --- update temperature values (diff = target - baseline) ---
+        df_b = df_yearly[df_yearly["year"] == b][["Country", "avg_temp"]].rename(columns={"avg_temp": "temp_b"})
+        df_t = df_yearly[df_yearly["year"] == t][["Country", "avg_temp"]].rename(columns={"avg_temp": "temp_t"})
+        merged = df_b.merge(df_t, on="Country", how="outer")
+        merged["diff"] = merged["temp_t"] - merged["temp_b"]
+        df_aligned = merged.set_index("Country").reindex(all_countries)
+        new_z = df_aligned["diff"].values
 
         initial_map.data[0].z = new_z
 
