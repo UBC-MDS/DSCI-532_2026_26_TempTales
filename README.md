@@ -8,7 +8,7 @@
 
 ## Overview
 
-**TempTales** is an interactive dashboard that allows users to explore global and country-level temperature trends over time while connecting these trends to major historical events. Users can select a country, view seasonal and monthly temperature patterns, and see how significant events like industrialization or world wars align with temperature changes. A world heatmap provides a spatial view of temperatures for selected years, making regional patterns immediately clear. This tool consolidates climate data from over two centuries into a user-friendly interface for researchers, students, policy makers, and environmentally conscious individuals.
+**TempTales** is an interactive dashboard that allows users to explore global and country-level temperature trends over time while connecting these trends to major historical events. Users can select a country, view seasonal and monthly temperature patterns, and see how significant events like industrialization or world wars align with temperature changes. A world heatmap provides a spatial view of temperatures for selected years, making regional patterns immediately clear. This tool consolidates climate data from 1860-2012 into a user-friendly interface for researchers, students, policy makers, and environmentally conscious individuals.
 
 Deployed Dashboard URL: https://019c9116-f7e7-177d-42c7-e2e3b140264c.share.connect.posit.cloud
 
