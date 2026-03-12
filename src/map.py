@@ -8,11 +8,11 @@ def build_base_map(all_countries):
         locationmode='country names',
         z=empty_z,
         colorscale='RdBu_r',
-        zmin=-20, zmax=30,
+        zmin=-3, zmax=3,
         marker_line_color='darkgray',
         marker_line_width=0.5,
         colorbar=dict(
-            title="Temp (°C)",
+            title="Change (°C)",
             orientation="h",
             len=0.7,
             lenmode="fraction",
@@ -31,7 +31,8 @@ def build_base_map(all_countries):
             coastlinecolor="darkgray",
             showland=True,
             landcolor="#eaeaea",
-            showocean=False,
+            showocean=True,
+            oceancolor="#dde5ed",
             showlakes=False,
             bgcolor="rgba(0,0,0,0)",
             projection=dict(type="natural earth"),
@@ -54,8 +55,8 @@ def apply_country_highlight(fig, all_countries, selected_country):
 
     for c in all_countries:
         if c == selected_country:
-            line_widths.append(3)
-            line_colors.append("black")
+            line_widths.append(1.5)
+            line_colors.append("white")
             opacities.append(1.0)
         else:
             line_widths.append(0.5)
