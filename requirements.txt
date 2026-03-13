@@ -22,3 +22,5 @@ chatlas
 python-dotenv
 shinychat
 querychat
+ibis-framework
+duckdb
