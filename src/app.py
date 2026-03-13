@@ -5,8 +5,9 @@ from shinywidgets import render_altair, render_plotly, render_widget
 import plotly.graph_objects as go
 import altair as alt
 import pandas as pd
-
 from src.chat import qc
+import ibis
+from ibis import _
 
 # =====================================
 # Import shared data, UI layout, and plot builders
@@ -97,31 +98,36 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         return b, t, None
 
+    ################## Revised filtered_yearly_data to use ibis expressions
     @reactive.Calc
     def filtered_yearly_data():
-        """Aggregated yearly data for the selected country"""
-        return df_yearly[df_yearly["Country"] == input.country()]
-
+        """Aggregated yearly data for the selected country (Returns Ibis Expr)"""
+        return df_yearly.filter(_.Country == input.country())
+    
+    ################## Revised filtered_global_data to use ibis expressions
     @reactive.Calc
     def filtered_global_data():
-        """Global data for the selected year range"""
+        """Global data for the selected year range (Returns Ibis Expr)"""
         b, t, err = selected_range()
         if err:
-            return pd.DataFrame()
-
+            return None 
         data = filtered_yearly_data()
-        return data[(data["year"] >= b) & (data["year"] <= t)]
-
+        return data.filter(_.year.between(b, t))
+    
+    ################## Revised monthly_comparison_data to use ibis expressions
     @reactive.Calc
     def monthly_comparison_data():
-        """Monthly avg temperature comparison for baseline vs target year (long format for chart)."""
+        """Monthly avg temperature comparison for baseline vs target year (Executes and returns Pandas DF)"""
         b, t, err = selected_range()
         if err:
             return pd.DataFrame()
-
         country = input.country()
-        df = df_monthly[(df_monthly["Country"] == country) &
-                        (df_monthly["year"].isin([b, t]))]
+        
+        ######### lazy loading execution
+        expr = df_monthly.filter((_.Country == country) & (_.year.isin([b, t])))
+        # execute convert to Pandas for plotting & table
+        df = expr.execute()
+
         if df.empty:
             return pd.DataFrame()
 
@@ -135,6 +141,46 @@ def server(input: Inputs, output: Outputs, session: Session):
         merged["Change"] = merged[f"{t}_avg"] - merged[f"{b}_avg"]
         merged["Month"] = merged["month"].map(lambda m: month_labels[m - 1])
         return merged[["Month", f"{b}_avg", f"{t}_avg", "Change"]].round(2)
+
+
+    # @reactive.Calc
+    # def filtered_yearly_data():
+    #     """Aggregated yearly data for the selected country"""
+    #     return df_yearly[df_yearly["Country"] == input.country()]
+
+    # @reactive.Calc
+    # def filtered_global_data():
+    #     """Global data for the selected year range"""
+    #     b, t, err = selected_range()
+    #     if err:
+    #         return pd.DataFrame()
+
+    #     data = filtered_yearly_data()
+    #     return data[(data["year"] >= b) & (data["year"] <= t)]
+
+    # @reactive.Calc
+    # def monthly_comparison_data():
+    #     """Monthly avg temperature comparison for baseline vs target year (long format for chart)."""
+    #     b, t, err = selected_range()
+    #     if err:
+    #         return pd.DataFrame()
+
+    #     country = input.country()
+    #     df = df_monthly[(df_monthly["Country"] == country) &
+    #                     (df_monthly["year"].isin([b, t]))]
+    #     if df.empty:
+    #         return pd.DataFrame()
+
+    #     month_labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    #                     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    #     base = df[df["year"] == b][["month", "AvgTemp"]].rename(
+    #         columns={"AvgTemp": f"{b}_avg"})
+    #     target = df[df["year"] == t][["month", "AvgTemp"]].rename(
+    #         columns={"AvgTemp": f"{t}_avg"})
+    #     merged = base.merge(target, on="month")
+    #     merged["Change"] = merged[f"{t}_avg"] - merged[f"{b}_avg"]
+    #     merged["Month"] = merged["month"].map(lambda m: month_labels[m - 1])
+    #     return merged[["Month", f"{b}_avg", f"{t}_avg", "Change"]].round(2)
 
     @reactive.Calc
     def monthly_comparison_wide():
