@@ -20,6 +20,7 @@ dependencies:
   - watchdog
   - anywidget
   - tabulate
+  - ibis-duckdb
   - pip
   - pip:
     - kagglehub
