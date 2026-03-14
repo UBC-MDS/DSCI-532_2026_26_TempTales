@@ -57,7 +57,7 @@ def process_and_save_data(
     # Keep only required columns
     df_processed = df_processed[["year", "month", "country", "AvgTemp", "AvgUncertain", "season"]]
 
-    print("Saving to parquet...")
+    print("Saved to parquet file.")
     # Use pickle for fast I/O and data type preservation
     # df_processed.to_pickle(output_dir / "df_processed.pkl")
     # update to lazy loading set up (CSV → Parquet)
