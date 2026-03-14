@@ -39,7 +39,7 @@ df_seasonal = (
 ################### Pre-aggregate monthly w/ ibis expressions
 df_monthly = (
     df_processed.group_by(["year", "country", "month"])
-    .aggregate(AverageTemperature=_.AvgTemp.mean())
+    .aggregate(AvgTemp=_.AvgTemp.mean())
     .rename({"Country": "country"})
 )
 
