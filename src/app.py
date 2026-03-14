@@ -229,7 +229,12 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.ui
     def data_count_ui():
         """Render the data count UI element"""
-        data = filtered_global_data().execute()
+        expr = filtered_global_data()
+        # Guard clause: if expr is None, stop here
+        if expr is None:
+            return ui.div("Invalid range", class_="text-danger")
+        # Now it is safe to execute
+        data = expr.execute()
 
         b, t, err = selected_range()
         if err:
@@ -474,6 +479,8 @@ def server(input: Inputs, output: Outputs, session: Session):
         # merged = df_b.merge(df_t, on="Country", how="outer")
         # merged["diff"] = merged["temp_t"] - merged["temp_b"]
         
+        # Ensure no duplicates exist for 'Country' before setting it as index
+        merged = merged.drop_duplicates(subset=["Country"])
         df_aligned = merged.set_index("Country").reindex(all_countries)
         new_z = df_aligned["diff"].values
 
