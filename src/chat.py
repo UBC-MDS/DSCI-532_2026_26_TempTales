@@ -4,6 +4,7 @@ import numpy as np
 from dotenv import load_dotenv
 import chatlas as ctl
 from querychat import QueryChat
+from ibis import _
 
 from .utils import df_monthly
 
