@@ -32,7 +32,7 @@ df_yearly = (
 df_seasonal = (
     df_processed.group_by(["year", "country", "season"])
     .aggregate(AverageTemperature=_.AvgTemp.mean())
-    .rename({"Country": "country", "AverageTemperature": "AvgTemp"})
+    .rename({"Country": "country"})
 )
 
 
