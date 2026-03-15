@@ -49,10 +49,7 @@ app_sidebar = ui.sidebar(
     country_selector,
     baseline_year_input,
     target_year_input,
-    ui.div(
-        ui.output_ui("year_validation_ui"),
-        class_="year-validation-slot"
-    ),
+    ui.output_ui("year_validation_ui"),
     title="Filters",
     open="closed",
     id="app_sidebar",
@@ -297,7 +294,6 @@ data_table_css = ui.tags.style("""
     .data-table-compact table { font-size: 0.7rem !important; }
     .data-table-compact th,
     .data-table-compact td { padding: 0.15rem 0.35rem !important; }
-    .year-validation-slot { min-height: 2.25rem; }
     .stable-card-body { min-height: 7.5rem; }
     .data-count-body { min-height: 9.5rem; }
     .event-card-body { min-height: 6.5rem; }

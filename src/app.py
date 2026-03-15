@@ -221,8 +221,8 @@ def server(input: Inputs, output: Outputs, session: Session):
     def year_validation_ui():
         _, _, err = selected_range()
         if err:
-            return ui.div(err, class_="text-danger small")
-        return ui.div("Year range is valid.", class_="text-success small")
+            return ui.div(err, class_="text-danger")
+        return ui.div("Year range is valid.", class_="text-success")
 
     # Data Count UI
     @render.ui
