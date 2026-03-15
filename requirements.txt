@@ -22,3 +22,6 @@ chatlas
 python-dotenv
 shinychat
 querychat
+ibis-framework
+duckdb
+sqlalchemy # needed for Ibis + DuckDB

@@ -23,12 +23,16 @@ help:
 # Create or update the conda environment
 install:
 	@echo -e "$(GREEN)Creating/updating conda environment $(ENV_NAME)...$(RESET)"
-	@conda env update --file environment.yml --prune
+	@if conda env list | grep -q "^$(ENV_NAME) "; then \
+		conda env update -n $(ENV_NAME) --file environment.yml --prune; \
+	else \
+		conda env create -n $(ENV_NAME) -f environment.yml; \
+	fi
 
 db:
 	@echo -e "$(CYAN)Downloading and updating database...$(RESET)"
 	@$(PYTHON) src/data_loader.py
-	@echo -e "$(CYAN)Processing data into pickle format...$(RESET)"
+	@echo -e "$(CYAN)Processing data into parquet format...$(RESET)"
 	@$(PYTHON) src/data_processor.py
 
 # Run the Shiny app

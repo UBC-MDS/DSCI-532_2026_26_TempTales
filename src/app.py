@@ -5,13 +5,14 @@ from shinywidgets import render_altair, render_plotly, render_widget
 import plotly.graph_objects as go
 import altair as alt
 import pandas as pd
-
 from src.chat import qc
+import ibis
+from ibis import _
 
 # =====================================
 # Import shared data, UI layout, and plot builders
 # =====================================
-from src.utils import df_yearly, df_seasonal, df_monthly, min_year, max_year
+from src.utils import df_yearly, df_seasonal, df_monthly, min_year, max_year, country_choices
 from src.ui import app_ui
 from src.plot import build_temp_chart, build_yearly_plot, build_diff_plot
 from src.data_count import data_count_prep
@@ -97,31 +98,36 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         return b, t, None
 
+    ################## Revised filtered_yearly_data to use ibis expressions
     @reactive.Calc
     def filtered_yearly_data():
-        """Aggregated yearly data for the selected country"""
-        return df_yearly[df_yearly["Country"] == input.country()]
-
+        """Aggregated yearly data for the selected country (Returns Ibis Expr)"""
+        return df_yearly.filter(_.Country == input.country())
+    
+    ################## Revised filtered_global_data to use ibis expressions
     @reactive.Calc
     def filtered_global_data():
-        """Global data for the selected year range"""
+        """Global data for the selected year range (Returns Ibis Expr)"""
         b, t, err = selected_range()
         if err:
-            return pd.DataFrame()
-
+            return None 
         data = filtered_yearly_data()
-        return data[(data["year"] >= b) & (data["year"] <= t)]
-
+        return data.filter(_.year.between(b, t))
+    
+    ################## Revised monthly_comparison_data to use ibis expressions
     @reactive.Calc
     def monthly_comparison_data():
-        """Monthly avg temperature comparison for baseline vs target year (long format for chart)."""
+        """Monthly avg temperature comparison for baseline vs target year (Executes and returns Pandas DF)"""
         b, t, err = selected_range()
         if err:
             return pd.DataFrame()
-
         country = input.country()
-        df = df_monthly[(df_monthly["Country"] == country) &
-                        (df_monthly["year"].isin([b, t]))]
+        
+        ######### lazy loading execution
+        expr = df_monthly.filter((_.Country == country) & (_.year.isin([b, t])))
+        # execute convert to Pandas for plotting & table
+        df = expr.execute()
+
         if df.empty:
             return pd.DataFrame()
 
@@ -135,6 +141,46 @@ def server(input: Inputs, output: Outputs, session: Session):
         merged["Change"] = merged[f"{t}_avg"] - merged[f"{b}_avg"]
         merged["Month"] = merged["month"].map(lambda m: month_labels[m - 1])
         return merged[["Month", f"{b}_avg", f"{t}_avg", "Change"]].round(2)
+
+
+    # @reactive.Calc
+    # def filtered_yearly_data():
+    #     """Aggregated yearly data for the selected country"""
+    #     return df_yearly[df_yearly["Country"] == input.country()]
+
+    # @reactive.Calc
+    # def filtered_global_data():
+    #     """Global data for the selected year range"""
+    #     b, t, err = selected_range()
+    #     if err:
+    #         return pd.DataFrame()
+
+    #     data = filtered_yearly_data()
+    #     return data[(data["year"] >= b) & (data["year"] <= t)]
+
+    # @reactive.Calc
+    # def monthly_comparison_data():
+    #     """Monthly avg temperature comparison for baseline vs target year (long format for chart)."""
+    #     b, t, err = selected_range()
+    #     if err:
+    #         return pd.DataFrame()
+
+    #     country = input.country()
+    #     df = df_monthly[(df_monthly["Country"] == country) &
+    #                     (df_monthly["year"].isin([b, t]))]
+    #     if df.empty:
+    #         return pd.DataFrame()
+
+    #     month_labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    #                     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    #     base = df[df["year"] == b][["month", "AvgTemp"]].rename(
+    #         columns={"AvgTemp": f"{b}_avg"})
+    #     target = df[df["year"] == t][["month", "AvgTemp"]].rename(
+    #         columns={"AvgTemp": f"{t}_avg"})
+    #     merged = base.merge(target, on="month")
+    #     merged["Change"] = merged[f"{t}_avg"] - merged[f"{b}_avg"]
+    #     merged["Month"] = merged["month"].map(lambda m: month_labels[m - 1])
+    #     return merged[["Month", f"{b}_avg", f"{t}_avg", "Change"]].round(2)
 
     @reactive.Calc
     def monthly_comparison_wide():
@@ -183,7 +229,12 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.ui
     def data_count_ui():
         """Render the data count UI element"""
-        data = filtered_global_data()
+        expr = filtered_global_data()
+        # Guard clause: if expr is None, stop here
+        if expr is None:
+            return ui.div("Invalid range", class_="text-danger")
+        # Now it is safe to execute
+        data = expr.execute()
 
         b, t, err = selected_range()
         if err:
@@ -250,8 +301,14 @@ def server(input: Inputs, output: Outputs, session: Session):
             return render.DataGrid(pd.DataFrame({"Message": ["Invalid year selection"]}))
 
         country = input.country()
-        df_b = df_seasonal[(df_seasonal["Country"] == country) & (df_seasonal["year"] == b)]
-        df_t = df_seasonal[(df_seasonal["Country"] == country) & (df_seasonal["year"] == t)]
+        ############ Revised to use ibis expressions and execute to get data
+        expr_b = df_seasonal.filter((_.Country == country) & (_.year == b))
+        expr_t = df_seasonal.filter((_.Country == country) & (_.year == t))
+        df_b = expr_b.execute()
+        df_t = expr_t.execute()
+
+        # df_b = df_seasonal[(df_seasonal["Country"] == country) & (df_seasonal["year"] == b)]
+        # df_t = df_seasonal[(df_seasonal["Country"] == country) & (df_seasonal["year"] == t)]
 
         seasons = ["Spring", "Summer", "Fall", "Winter"]
         rows = []
@@ -373,7 +430,8 @@ def server(input: Inputs, output: Outputs, session: Session):
     # World Heatmap
     # =============================
     
-    all_countries = sorted(df_yearly["Country"].unique())
+    # all_countries = sorted(df_yearly["Country"].unique())
+    all_countries = country_choices # we already have all_countries generated in utils.py
     initial_map = build_base_map(all_countries)
 
     def _map_click(trace, points, state):
@@ -406,11 +464,23 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         selected_country = input.country()
 
-        # --- update temperature values (diff = target - baseline) ---
-        df_b = df_yearly[df_yearly["year"] == b][["Country", "avg_temp"]].rename(columns={"avg_temp": "temp_b"})
-        df_t = df_yearly[df_yearly["year"] == t][["Country", "avg_temp"]].rename(columns={"avg_temp": "temp_t"})
-        merged = df_b.merge(df_t, on="Country", how="outer")
-        merged["diff"] = merged["temp_t"] - merged["temp_b"]
+        ############ Revised to use ibis expressions and execute to get data
+        df_b = df_yearly.filter(_.year == b).select(["Country", "avg_temp"]).rename({"temp_b": "avg_temp"})
+        df_t = df_yearly.filter(_.year == t).select(["Country", "avg_temp"]).rename({"temp_t": "avg_temp"})
+        # Join the two tables in the database
+        merged_expr = df_b.join(df_t, "Country", how="outer")
+        merged_expr = merged_expr.mutate(diff=_.temp_t - _.temp_b)
+        # Execute the map data calculation
+        merged = merged_expr.execute()
+
+        # # --- update temperature values (diff = target - baseline) ---
+        # df_b = df_yearly[df_yearly["year"] == b][["Country", "avg_temp"]].rename(columns={"avg_temp": "temp_b"})
+        # df_t = df_yearly[df_yearly["year"] == t][["Country", "avg_temp"]].rename(columns={"avg_temp": "temp_t"})
+        # merged = df_b.merge(df_t, on="Country", how="outer")
+        # merged["diff"] = merged["temp_t"] - merged["temp_b"]
+        
+        # Ensure no duplicates exist for 'Country' before setting it as index
+        merged = merged.drop_duplicates(subset=["Country"])
         df_aligned = merged.set_index("Country").reindex(all_countries)
         new_z = df_aligned["diff"].values
 
