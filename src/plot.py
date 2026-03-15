@@ -11,7 +11,8 @@ def build_temp_chart(
     baseline_year: int,
     target_year: int,
     country: str,
-    height: int = 300
+    height: int = 300,
+    empty_message: str = "Invalid year selection."
 ) -> alt.Chart:
     """
     Build the monthly dual-line temperature overlay chart.
@@ -27,8 +28,28 @@ def build_temp_chart(
         Altair Chart (or empty chart if data is empty)
     """
     if data.empty:
-        empty_df = pd.DataFrame({"Month": [], "Temperature": [], "Year": []})
-        return alt.Chart(empty_df).mark_line().encode(x="Month", y="Temperature")
+        empty_df = pd.DataFrame({
+            "x": [0.5],
+            "y": [0.5],
+            "message": [empty_message]
+        })
+
+        return (
+            alt.Chart(empty_df)
+            .mark_text(
+                align="center",
+                baseline="middle",
+                fontSize=16,
+                color="#6c757d"
+            )
+            .encode(
+                x=alt.X("x:Q", axis=None, scale=alt.Scale(domain=[0, 1])),
+                y=alt.Y("y:Q", axis=None, scale=alt.Scale(domain=[0, 1])),
+                text="message:N"
+            )
+            .properties(height=height)
+            .configure_view(strokeWidth=0)
+        )
 
     b, t = baseline_year, target_year
     base_col = f"{b}_avg"

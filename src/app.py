@@ -437,7 +437,14 @@ def server(input: Inputs, output: Outputs, session: Session):
         data = monthly_comparison_data()
         b, t, err = selected_range()
         if err:
-            return build_temp_chart(pd.DataFrame(), 0, 0, "", height=280)
+            return build_temp_chart(
+                pd.DataFrame(),
+                0,
+                0,
+                "",
+                height=280,
+                empty_message="Invalid year selection."
+            )
         return build_temp_chart(
             data, b, t, input.country(), height=280
         )
