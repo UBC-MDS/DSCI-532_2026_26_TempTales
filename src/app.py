@@ -142,7 +142,6 @@ def server(input: Inputs, output: Outputs, session: Session):
         merged["Month"] = merged["month"].map(lambda m: month_labels[m - 1])
         return merged[["Month", f"{b}_avg", f"{t}_avg", "Change"]].round(2)
 
-
     # @reactive.Calc
     # def filtered_yearly_data():
     #     """Aggregated yearly data for the selected country"""
@@ -222,23 +221,25 @@ def server(input: Inputs, output: Outputs, session: Session):
     def year_validation_ui():
         _, _, err = selected_range()
         if err:
-            return ui.div(err, class_="text-danger")
-        return ui.div("Year range is valid.", class_="text-success")
+            return ui.div(err, class_="text-danger small")
+        return ui.div("Year range is valid.", class_="text-success small")
 
     # Data Count UI
     @render.ui
     def data_count_ui():
         """Render the data count UI element"""
         expr = filtered_global_data()
-        # Guard clause: if expr is None, stop here
-        if expr is None:
-            return ui.div("Invalid range", class_="text-danger")
+        b, t, err = selected_range()
+        if err or expr is None:
+            return ui.div(
+                ui.p(
+                    "Choose a target year greater than the reference year.",
+                    class_="text-muted small mb-0"
+                )
+            )
+
         # Now it is safe to execute
         data = expr.execute()
-
-        b, t, err = selected_range()
-        if err:
-            return
 
         baseline_display_text, baseline_sub_text = data_count_prep(data, b)
         target_display_text, target_sub_text = data_count_prep(data, t)
@@ -262,7 +263,10 @@ def server(input: Inputs, output: Outputs, session: Session):
         # Guard against invalid year inputs
         b, t, err = selected_range()
         if err:
-            return
+            return ui.p(
+                "Historical events will appear once the year range is valid.",
+                class_="text-muted small mb-0"
+            )
 
         # Event Place holder
         events = [
@@ -389,9 +393,20 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.data_frame
     def data_table():
         """Table of monthly comparison in wide format (3 rows x 12 columns)."""
+        _, _, err = selected_range()
+        if err:
+            return render.DataGrid(
+                pd.DataFrame({"Message": ["Invalid year selection"]}),
+                selection_mode="none",
+                height="auto"
+            )
         data = monthly_comparison_wide()
         if data.empty:
-            return render.DataGrid(pd.DataFrame(), selection_mode="none")
+            return render.DataGrid(
+                pd.DataFrame({"Message": ["No monthly comparison data available for the selected inputs."]}),
+                selection_mode="none",
+                height="auto"
+            )
         return render.DataGrid(data, selection_mode="none", styles=_table_styles_wide, height="auto")
 
     @render.download(filename=lambda: _csv_download_filename())
@@ -460,6 +475,12 @@ def server(input: Inputs, output: Outputs, session: Session):
     def update_map_data():
         b, t, err = selected_range()
         if err:
+            initial_map.data[0].z = [None] * len(all_countries)
+            apply_country_highlight(initial_map, all_countries, None)
+            initial_map.update_geos(
+                projection=dict(type="equirectangular"),
+                fitbounds="locations",
+            )
             return
 
         selected_country = input.country()
@@ -559,7 +580,6 @@ def server(input: Inputs, output: Outputs, session: Session):
         df_yearly = df_yearly[df_yearly["Country"].isin(keep_countries)]
 
         return df_yearly
-
 
     @render_widget
     def ai_centred_ts_plot():

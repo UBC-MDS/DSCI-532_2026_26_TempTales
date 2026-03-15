@@ -49,7 +49,10 @@ app_sidebar = ui.sidebar(
     country_selector,
     baseline_year_input,
     target_year_input,
-    ui.output_ui("year_validation_ui"),
+    ui.div(
+        ui.output_ui("year_validation_ui"),
+        class_="year-validation-slot"
+    ),
     title="Filters",
     open="closed",
     id="app_sidebar",
@@ -60,13 +63,19 @@ app_sidebar = ui.sidebar(
 # ==========================================
 data_count_card = ui.card(
     ui.card_header("Yearly Average Temperature"),
-    ui.output_ui("data_count_ui"),
+    ui.div(
+        ui.output_ui("data_count_ui"),
+        class_="stable-card-body data-count-body"
+    ),
     class_="mb-3"
 )
 
 event_card = ui.card(
     ui.card_header("Historical Event"),
-    ui.output_ui("event_ui"),
+    ui.div(
+        ui.output_ui("event_ui"),
+        class_="stable-card-body event-card-body"
+    ),
     class_="bg-light mb-3"
 )
 
@@ -121,8 +130,8 @@ table_card = ui.card(
         ui.output_data_frame("data_table"),
         class_="data-table-compact"
     ),
-    style="min-height: 0; flex: 1;",
-    class_="mb-3"
+    style="min-height: 0; flex: 1; overflow: hidden;",
+    class_="mb-0"
 )
 
 # Top section (70%): heatmap 4 + line 6, bottom-aligned; Bottom section (30%): table
@@ -137,13 +146,13 @@ charts_row = ui.layout_columns(
 right_area = ui.div(
     ui.div(
         charts_row,
-        style="flex: 7; min-height: 0; display: flex; flex-direction: column;"
+        style="flex: 7; min-height: 0; display: flex; flex-direction: column; overflow: hidden;"
     ),
     ui.div(
         table_card,
         style="flex: 3; min-height: 0; display: flex; flex-direction: column; overflow: hidden;"
     ),
-    style="display: flex; flex-direction: column; min-height: 55vh;"
+    style="display: flex; flex-direction: column; min-height: 55vh; gap: 0.85rem; overflow: hidden;"
 )
 
 
@@ -288,6 +297,10 @@ data_table_css = ui.tags.style("""
     .data-table-compact table { font-size: 0.7rem !important; }
     .data-table-compact th,
     .data-table-compact td { padding: 0.15rem 0.35rem !important; }
+    .year-validation-slot { min-height: 2.25rem; }
+    .stable-card-body { min-height: 7.5rem; }
+    .data-count-body { min-height: 9.5rem; }
+    .event-card-body { min-height: 6.5rem; }
 """)
 
 # ==========================================
