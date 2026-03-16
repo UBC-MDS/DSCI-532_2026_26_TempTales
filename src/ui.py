@@ -14,11 +14,17 @@ AUTHORS_LIST = ["Emily Jin", "Ian Gault", "Purity Jangaya", "Yusheng Li"]
 # ==========================================
 # 1. Define Inputs
 # ==========================================
-country_selector = ui.input_select(
+country_selector = ui.input_selectize(
     "country",
     "Select Country",
     choices=country_choices,
-    selected="Canada"
+    selected="Canada",
+    multiple=False,
+    width="100%",
+    options={
+        "placeholder": "Type to search...",
+        "allowEmptyOption": False,
+    }
 )
 
 baseline_year_input = ui.input_numeric(
