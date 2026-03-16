@@ -26,3 +26,4 @@ ibis-framework
 duckdb
 sqlalchemy # needed for Ibis + DuckDB
 pyarrow
+pyarrow-hotfix
