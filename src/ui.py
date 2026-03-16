@@ -51,15 +51,18 @@ target_year_input = ui.input_numeric(
 # ==========================================
 # 2. Define Sidebar (Collapsible)
 # ==========================================
-app_sidebar = ui.sidebar(
+# Define the sidebar specifically for the dashboard (not the AI tab)
+dashboard_sidebar = ui.sidebar(
     country_selector,
     baseline_year_input,
     target_year_input,
     ui.output_ui("year_validation_ui"),
-    title="Filters",
-    open="closed",
-    id="app_sidebar",
+    title="Dashboard Filters",
+    open="open", 
+    id="dashboard_sidebar",
 )
+
+
 
 # ==========================================
 # 4. Define Left Column Cards
@@ -271,12 +274,15 @@ app_footer = ui.tags.footer(
 # ==========================================
 # 7. Main Content (Dashboard tab)
 # ==========================================
-main_content = ui.div(
+#  add the sidebar as part of main_content
+main_content = ui.layout_sidebar(
+    dashboard_sidebar,
     ui.layout_columns(
         left_column,
         right_area,
         col_widths=[3, 9]
-    )
+    ),
+    fillable=True
 )
 
 # ==========================================
@@ -316,7 +322,6 @@ app_ui = ui.TagList(
         ui.nav_panel("AI Assistant", ai_assistant_content, value="ai_assistant"),
         title=ui.output_ui("title_placeholder"),
         id="main_nav",
-        sidebar=app_sidebar,
         footer=app_footer,
         fillable=True,
         padding=[10, 10, 60, 10],
