@@ -127,7 +127,7 @@ temp_plot_card = ui.card(
 table_card = ui.card(
     ui.card_header(
         ui.div(
-            "Data Table",
+            "Monthly Temp Comparison",
             ui.download_button("download_table_csv", "Export CSV", class_="btn-sm"),
             class_="d-flex justify-content-between align-items-center w-100"
         )
