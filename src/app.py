@@ -5,18 +5,19 @@ from shinywidgets import render_altair, render_plotly, render_widget
 import plotly.graph_objects as go
 import altair as alt
 import pandas as pd
-
 from src.chat import qc
+import ibis
+from ibis import _
 
 # =====================================
 # Import shared data, UI layout, and plot builders
 # =====================================
-from src.utils import df_yearly, df_seasonal, df_monthly, min_year, max_year
+from src.utils import df_yearly, df_seasonal, df_monthly, min_year, max_year, country_choices
 from src.ui import app_ui
 from src.plot import build_temp_chart, build_yearly_plot, build_diff_plot
 from src.data_count import data_count_prep
 from src.map import build_base_map, apply_country_highlight
-
+from src.table_styles import diverging_styles, table_styles_wide
 
 def server(input: Inputs, output: Outputs, session: Session):
 
@@ -50,31 +51,36 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         return b, t, None
 
+    ################## Revised filtered_yearly_data to use ibis expressions
     @reactive.Calc
     def filtered_yearly_data():
-        """Aggregated yearly data for the selected country"""
-        return df_yearly[df_yearly["Country"] == input.country()]
-
+        """Aggregated yearly data for the selected country (Returns Ibis Expr)"""
+        return df_yearly.filter(_.Country == input.country())
+    
+    ################## Revised filtered_global_data to use ibis expressions
     @reactive.Calc
     def filtered_global_data():
-        """Global data for the selected year range"""
+        """Global data for the selected year range (Returns Ibis Expr)"""
         b, t, err = selected_range()
         if err:
-            return pd.DataFrame()
-
+            return None 
         data = filtered_yearly_data()
-        return data[(data["year"] >= b) & (data["year"] <= t)]
-
+        return data.filter(_.year.between(b, t))
+    
+    ################## Revised monthly_comparison_data to use ibis expressions
     @reactive.Calc
     def monthly_comparison_data():
-        """Monthly avg temperature comparison for baseline vs target year (long format for chart)."""
+        """Monthly avg temperature comparison for baseline vs target year (Executes and returns Pandas DF)"""
         b, t, err = selected_range()
         if err:
             return pd.DataFrame()
-
         country = input.country()
-        df = df_monthly[(df_monthly["Country"] == country) &
-                        (df_monthly["year"].isin([b, t]))]
+        
+        ######### lazy loading execution
+        expr = df_monthly.filter((_.Country == country) & (_.year.isin([b, t])))
+        # execute convert to Pandas for plotting & table
+        df = expr.execute()
+
         if df.empty:
             return pd.DataFrame()
 
@@ -88,6 +94,45 @@ def server(input: Inputs, output: Outputs, session: Session):
         merged["Change"] = merged[f"{t}_avg"] - merged[f"{b}_avg"]
         merged["Month"] = merged["month"].map(lambda m: month_labels[m - 1])
         return merged[["Month", f"{b}_avg", f"{t}_avg", "Change"]].round(2)
+
+    # @reactive.Calc
+    # def filtered_yearly_data():
+    #     """Aggregated yearly data for the selected country"""
+    #     return df_yearly[df_yearly["Country"] == input.country()]
+
+    # @reactive.Calc
+    # def filtered_global_data():
+    #     """Global data for the selected year range"""
+    #     b, t, err = selected_range()
+    #     if err:
+    #         return pd.DataFrame()
+
+    #     data = filtered_yearly_data()
+    #     return data[(data["year"] >= b) & (data["year"] <= t)]
+
+    # @reactive.Calc
+    # def monthly_comparison_data():
+    #     """Monthly avg temperature comparison for baseline vs target year (long format for chart)."""
+    #     b, t, err = selected_range()
+    #     if err:
+    #         return pd.DataFrame()
+
+    #     country = input.country()
+    #     df = df_monthly[(df_monthly["Country"] == country) &
+    #                     (df_monthly["year"].isin([b, t]))]
+    #     if df.empty:
+    #         return pd.DataFrame()
+
+    #     month_labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    #                     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    #     base = df[df["year"] == b][["month", "AvgTemp"]].rename(
+    #         columns={"AvgTemp": f"{b}_avg"})
+    #     target = df[df["year"] == t][["month", "AvgTemp"]].rename(
+    #         columns={"AvgTemp": f"{t}_avg"})
+    #     merged = base.merge(target, on="month")
+    #     merged["Change"] = merged[f"{t}_avg"] - merged[f"{b}_avg"]
+    #     merged["Month"] = merged["month"].map(lambda m: month_labels[m - 1])
+    #     return merged[["Month", f"{b}_avg", f"{t}_avg", "Change"]].round(2)
 
     @reactive.Calc
     def monthly_comparison_wide():
@@ -136,11 +181,18 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.ui
     def data_count_ui():
         """Render the data count UI element"""
-        data = filtered_global_data()
-
+        expr = filtered_global_data()
         b, t, err = selected_range()
-        if err:
-            return
+        if err or expr is None:
+            return ui.div(
+                ui.p(
+                    "Choose a target year greater than the reference year.",
+                    class_="text-muted small mb-0"
+                )
+            )
+
+        # Now it is safe to execute
+        data = expr.execute()
 
         baseline_display_text, baseline_sub_text = data_count_prep(data, b)
         target_display_text, target_sub_text = data_count_prep(data, t)
@@ -164,7 +216,10 @@ def server(input: Inputs, output: Outputs, session: Session):
         # Guard against invalid year inputs
         b, t, err = selected_range()
         if err:
-            return
+            return ui.p(
+                "Historical events will appear once the year range is valid.",
+                class_="text-muted small mb-0"
+            )
 
         # Event Place holder
         events = [
@@ -203,8 +258,14 @@ def server(input: Inputs, output: Outputs, session: Session):
             return render.DataGrid(pd.DataFrame({"Message": ["Invalid year selection"]}))
 
         country = input.country()
-        df_b = df_seasonal[(df_seasonal["Country"] == country) & (df_seasonal["year"] == b)]
-        df_t = df_seasonal[(df_seasonal["Country"] == country) & (df_seasonal["year"] == t)]
+        ############ Revised to use ibis expressions and execute to get data
+        expr_b = df_seasonal.filter((_.Country == country) & (_.year == b))
+        expr_t = df_seasonal.filter((_.Country == country) & (_.year == t))
+        df_b = expr_b.execute()
+        df_t = expr_t.execute()
+
+        # df_b = df_seasonal[(df_seasonal["Country"] == country) & (df_seasonal["year"] == b)]
+        # df_t = df_seasonal[(df_seasonal["Country"] == country) & (df_seasonal["year"] == t)]
 
         seasons = ["Spring", "Summer", "Fall", "Winter"]
         rows = []
@@ -228,30 +289,21 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         df_table = pd.DataFrame(rows)
 
-        # Color-code the Change column (warming red, cooling blue)
-        styles = []
+        # Diverging gradient for Change column (reuse shared logic)
+        cells = []
         if "Change" in df_table.columns:
             change_col = df_table.columns.get_loc("Change")
             for i, val in enumerate(df_table["Change"]):
-                if pd.isna(val):
-                    continue
-                if val > 0:
-                    styles.append({
-                        "rows": [i],
-                        "cols": [change_col],
-                        "style": {"color": "#c0392b", "backgroundColor": "rgba(231, 76, 60, 0.15)"}
-                    })
-                elif val < 0:
-                    styles.append({
-                        "rows": [i],
-                        "cols": [change_col],
-                        "style": {"color": "#2980b9", "backgroundColor": "rgba(52, 152, 219, 0.15)"}
-                    })
-
+                if not pd.isna(val):
+                    try:
+                        cells.append((i, change_col, float(val)))
+                    except (ValueError, TypeError):
+                        pass
+        styles = diverging_styles(cells)
         return render.DataGrid(df_table, selection_mode="none", styles=styles)
 
     # =============================
-    # Title Placeholder (Value Box)
+    # Title UI
     # =============================
     @render.ui
     def title_placeholder():
@@ -272,44 +324,24 @@ def server(input: Inputs, output: Outputs, session: Session):
     # =============================
     # Data Table (Monthly Comparison)
     # =============================
-    def _table_styles_wide(df: pd.DataFrame):
-        """Red (warmer) / blue (cooler) for Change row (row 2)."""
-        if df.empty or df.shape[0] < 3:
-            return []
-        styles = []
-        for row_idx in [2]:
-            for col_idx in range(1, df.shape[1]):
-                try:
-                    val = df.iloc[row_idx, col_idx]
-                except (IndexError, KeyError):
-                    continue
-                if pd.isna(val):
-                    continue
-                try:
-                    val_num = float(val)
-                except (ValueError, TypeError):
-                    continue
-                if val_num > 0:
-                    styles.append({
-                        "rows": [row_idx],
-                        "cols": [col_idx],
-                        "style": {"color": "#c0392b", "backgroundColor": "rgba(231, 76, 60, 0.15)"}
-                    })
-                elif val_num < 0:
-                    styles.append({
-                        "rows": [row_idx],
-                        "cols": [col_idx],
-                        "style": {"color": "#2980b9", "backgroundColor": "rgba(52, 152, 219, 0.15)"}
-                    })
-        return styles
-
     @render.data_frame
     def data_table():
         """Table of monthly comparison in wide format (3 rows x 12 columns)."""
+        _, _, err = selected_range()
+        if err:
+            return render.DataGrid(
+                pd.DataFrame({"Message": ["Invalid year selection"]}),
+                selection_mode="none",
+                height="auto"
+            )
         data = monthly_comparison_wide()
         if data.empty:
-            return render.DataGrid(pd.DataFrame(), selection_mode="none")
-        return render.DataGrid(data, selection_mode="none", styles=_table_styles_wide, height="auto")
+            return render.DataGrid(
+                pd.DataFrame({"Message": ["No monthly comparison data available for the selected inputs."]}),
+                selection_mode="none",
+                height="auto"
+            )
+        return render.DataGrid(data, selection_mode="none", styles=table_styles_wide, height="auto")
 
     @render.download(filename=lambda: _csv_download_filename())
     def download_table_csv():
@@ -339,15 +371,41 @@ def server(input: Inputs, output: Outputs, session: Session):
         data = monthly_comparison_data()
         b, t, err = selected_range()
         if err:
-            return build_temp_chart(pd.DataFrame(), 0, 0, "", height=280)
+            return build_temp_chart(
+                pd.DataFrame(),
+                0,
+                0,
+                "",
+                height=280,
+                empty_message="Invalid year selection."
+            )
         return build_temp_chart(
             data, b, t, input.country(), height=280
         )
-
+    # =============================
     # World Heatmap
-    all_countries = sorted(df_yearly["Country"].unique())
+    # =============================
+    
+    # all_countries = sorted(df_yearly["Country"].unique())
+    all_countries = country_choices # we already have all_countries generated in utils.py
     initial_map = build_base_map(all_countries)
 
+    def _map_click(trace, points, state):
+        if points.point_inds:
+            idx = points.point_inds[0]
+            country = all_countries[idx]
+            ui.update_select("country", selected=country, session=session)
+            
+    initial_map.data[0].on_click(_map_click)
+    
+    @render.ui
+    def map_card_header():
+        b, t, err = selected_range()
+        if err:
+            return ui.span("World Heatmap")
+        country = input.country()
+        return ui.span(f"World Heatmap — {country}: {b} vs {t}")
+    
     @render_widget
     def map_plot():
         """Render the global choropleth map for the selected year"""
@@ -358,15 +416,35 @@ def server(input: Inputs, output: Outputs, session: Session):
     def update_map_data():
         b, t, err = selected_range()
         if err:
+            initial_map.data[0].z = [None] * len(all_countries)
+            apply_country_highlight(initial_map, all_countries, None)
+            initial_map.update_geos(
+                projection=dict(type="equirectangular"),
+                fitbounds="locations",
+            )
             return
 
         selected_country = input.country()
 
-        # --- update temperature values ---
-        df_curr = df_yearly[df_yearly["year"] == t]
-        df_curr_indexed = df_curr.set_index("Country")
-        df_aligned = df_curr_indexed.reindex(all_countries)
-        new_z = df_aligned["avg_temp"].values
+        ############ Revised to use ibis expressions and execute to get data
+        df_b = df_yearly.filter(_.year == b).select(["Country", "avg_temp"]).rename({"temp_b": "avg_temp"})
+        df_t = df_yearly.filter(_.year == t).select(["Country", "avg_temp"]).rename({"temp_t": "avg_temp"})
+        # Join the two tables in the database
+        merged_expr = df_b.join(df_t, "Country", how="outer")
+        merged_expr = merged_expr.mutate(diff=_.temp_t - _.temp_b)
+        # Execute the map data calculation
+        merged = merged_expr.execute()
+
+        # # --- update temperature values (diff = target - baseline) ---
+        # df_b = df_yearly[df_yearly["year"] == b][["Country", "avg_temp"]].rename(columns={"avg_temp": "temp_b"})
+        # df_t = df_yearly[df_yearly["year"] == t][["Country", "avg_temp"]].rename(columns={"avg_temp": "temp_t"})
+        # merged = df_b.merge(df_t, on="Country", how="outer")
+        # merged["diff"] = merged["temp_t"] - merged["temp_b"]
+        
+        # Ensure no duplicates exist for 'Country' before setting it as index
+        merged = merged.drop_duplicates(subset=["Country"])
+        df_aligned = merged.set_index("Country").reindex(all_countries)
+        new_z = df_aligned["diff"].values
 
         initial_map.data[0].z = new_z
 
@@ -443,7 +521,6 @@ def server(input: Inputs, output: Outputs, session: Session):
         df_yearly = df_yearly[df_yearly["Country"].isin(keep_countries)]
 
         return df_yearly
-
 
     @render_widget
     def ai_centred_ts_plot():

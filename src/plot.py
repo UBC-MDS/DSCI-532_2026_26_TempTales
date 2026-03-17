@@ -11,7 +11,8 @@ def build_temp_chart(
     baseline_year: int,
     target_year: int,
     country: str,
-    height: int = 300
+    height: int = 300,
+    empty_message: str = "Invalid year selection."
 ) -> alt.Chart:
     """
     Build the monthly dual-line temperature overlay chart.
@@ -27,8 +28,28 @@ def build_temp_chart(
         Altair Chart (or empty chart if data is empty)
     """
     if data.empty:
-        empty_df = pd.DataFrame({"Month": [], "Temperature": [], "Year": []})
-        return alt.Chart(empty_df).mark_line().encode(x="Month", y="Temperature")
+        empty_df = pd.DataFrame({
+            "x": [0.5],
+            "y": [0.5],
+            "message": [empty_message]
+        })
+
+        return (
+            alt.Chart(empty_df)
+            .mark_text(
+                align="center",
+                baseline="middle",
+                fontSize=16,
+                color="#6c757d"
+            )
+            .encode(
+                x=alt.X("x:Q", axis=None, scale=alt.Scale(domain=[0, 1])),
+                y=alt.Y("y:Q", axis=None, scale=alt.Scale(domain=[0, 1])),
+                text="message:N"
+            )
+            .properties(height=height)
+            .configure_view(strokeWidth=0)
+        )
 
     b, t = baseline_year, target_year
     base_col = f"{b}_avg"
@@ -56,7 +77,9 @@ def build_temp_chart(
         values=list(range(1, 13)),
         labelExpr="['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][datum.value-1]",
         labelAngle=-45,
-        labelPadding=8
+        labelPadding=8,
+        labelFontSize=13,
+        titleFontSize=13
     )
     month_scale = alt.Scale(domain=[0.5, 12.5])
 
@@ -76,7 +99,7 @@ def build_temp_chart(
         .encode(
             x=alt.X("month_num:Q", axis=month_axis,
                     scale=month_scale, title="Month"),
-            y=alt.Y("Temperature:Q", title="Temperature (°C)", scale=temp_scale),
+            y=alt.Y("Temperature:Q", title="Monthly Avg. Temp (°C)", scale=temp_scale),
             color=alt.Color(
                 "Year:N",
                 scale=alt.Scale(range=["#2C7A7B", "#38B2AC"]),

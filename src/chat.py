@@ -4,6 +4,7 @@ import numpy as np
 from dotenv import load_dotenv
 import chatlas as ctl
 from querychat import QueryChat
+from ibis import _
 
 from .utils import df_monthly
 
@@ -12,8 +13,6 @@ load_dotenv()
 chat = ctl.ChatGithub(
     api_key=os.getenv("GITHUB_API_KEY"),
     model = "gpt-4.1-mini",
-    #system_prompt = "You are a helpful weather assistant."
-    # system_prompt = "You are a helpful assistant."
     system_prompt = """
         You are a climate data assistant for the TempTales dashboard.
 
@@ -30,8 +29,11 @@ chat = ctl.ChatGithub(
     """
 )
 
+################### Revised using ibis expressions
 # round the AvgTemp
-df_monthly["AvgTemp"] = np.round(df_monthly["AvgTemp"], 2)
+df_monthly = df_monthly.mutate(AvgTemp=_.AvgTemp.round(2))
+# df_monthly["AvgTemp"] = np.round(df_monthly["AvgTemp"], 2)
+
 # subset to the top 50 population countries (to decrease the sample size (org 243 countries))
 top50_countries = [
     "India",
@@ -190,10 +192,12 @@ top100_countries = [
     "Laos"
 ]
 
-df_monthly = df_monthly[df_monthly["Country"].isin(top100_countries)]
+################### Revised using ibis expressions
+# df_monthly = df_monthly[df_monthly["Country"].isin(top100_countries)]
+df_monthly = df_monthly.filter(_.Country.isin(top100_countries))
 
 qc = QueryChat(
-    df_monthly, 
+    df_monthly.execute(), 
     "temperature_data", 
     client=chat
 )

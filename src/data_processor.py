@@ -21,16 +21,16 @@ def process_and_save_data(
 ) -> None:
     """
     Reads raw climate data, processes it into a unified monthly dataframe,
-    and saves the result as a pickle file for high-performance loading.
+    and saves the result as a parquet file for high-performance loading.
 
     Args:
         raw_path (Path):
             Path to the raw GlobalLandTemperaturesByCountry.csv file.
         output_dir (Path):
-            Directory where the processed .pkl file will be saved.
+            Directory where the processed .parquet file will be saved.
 
     Output Files:
-        - df_processed.pkl: Unified dataframe with columns
+        - df_processed.parquet: Unified dataframe with columns
           year | month | country | AvgTemp | AvgUncertain | season
     """
 
@@ -43,7 +43,7 @@ def process_and_save_data(
     df["month"] = df.index.month
 
     # Filter for relevant timeframe
-    df = df[(df["year"] >= 1860)]
+    df = df[(df["year"] >= 1860) & (df["year"] <= 2012)]
 
     # Build unified dataframe with standardized column names
     df_processed = df.rename(columns={
@@ -57,9 +57,11 @@ def process_and_save_data(
     # Keep only required columns
     df_processed = df_processed[["year", "month", "country", "AvgTemp", "AvgUncertain", "season"]]
 
-    print("Saving to pickle...")
+    print("Saved to parquet file.")
     # Use pickle for fast I/O and data type preservation
-    df_processed.to_pickle(output_dir / "df_processed.pkl")
+    # df_processed.to_pickle(output_dir / "df_processed.pkl")
+    # update to lazy loading set up (CSV → Parquet)
+    df_processed.to_parquet(output_dir / "df_processed.parquet")
 
 
 if __name__ == "__main__":

@@ -8,7 +8,7 @@
 
 ## Overview
 
-**TempTales** is an interactive dashboard that allows users to explore global and country-level temperature trends over time while connecting these trends to major historical events. Users can select a country, view seasonal and monthly temperature patterns, and see how significant events like industrialization or world wars align with temperature changes. A world heatmap provides a spatial view of temperatures for selected years, making regional patterns immediately clear. This tool consolidates climate data from over two centuries into a user-friendly interface for researchers, students, policy makers, and environmentally conscious individuals.
+**TempTales** is an interactive dashboard that allows users to explore global and country-level temperature trends over time while connecting these trends to major historical events. Users can select a country, view seasonal and monthly temperature patterns, and see how significant events like industrialization or world wars align with temperature changes. A world heatmap provides a spatial view of temperatures for selected years, making regional patterns immediately clear. This tool consolidates climate data from 1860-2012 into a user-friendly interface for researchers, students, policy makers, and environmentally conscious individuals.
 
 Deployed Dashboard URL: https://019c9116-f7e7-177d-42c7-e2e3b140264c.share.connect.posit.cloud
 
@@ -34,7 +34,7 @@ Deployed Dashboard URL: https://019c9116-f7e7-177d-42c7-e2e3b140264c.share.conne
 
 ## For Users
 
-**TempTales** is an interactive dashboard that allows users to explore global and country-level temperature trends over time while connecting these trends to major historical events. Users can select a country, view seasonal and monthly temperature patterns, and see how significant events like industrialization or world wars align with temperature changes. A world heatmap provides a spatial view of temperatures for selected years, making regional patterns immediately clear. This tool consolidates climate data from over two centuries into a user-friendly interface for researchers, students, policy makers, and environmentally conscious individuals.
+**TempTales** is an interactive dashboard that allows users to explore global and country-level temperature trends over time while connecting these trends to major historical events. Users can select a country, view seasonal and monthly temperature patterns, and see how significant events like industrialization or world wars align with temperature changes. A world heatmap provides a spatial view of temperatures for selected years, making regional patterns immediately clear. This tool consolidates climate data from 1860-2012 into a user-friendly interface for researchers, students, policy makers, and environmentally conscious individuals.
 
 Rendered Dashboard links: 
 - main branch: https://019c9116-f7e7-177d-42c7-e2e3b140264c.share.connect.posit.cloud
@@ -61,34 +61,40 @@ The core logic of the project is located in the `src/` directory.
 
 ```text
 ├── data/                   # Data storage
-│   ├── raw/                # Raw data (downloaded via make)
-│   ├── processed/          # Processed pickle files (generated via make)
-│   └── figures/            # Static analysis figures
-├── img/                    # Images used in README (e.g., sketches)
+│   ├── raw/                # Raw climate CSVs (downloaded via data_loader.py)
+│   ├── processed/          # High-performance Parquet files (generated via data_processor.py)
+│   └── figures/            # Static analysis and EDA figures
+├── img/                    # Images used in README (sketches, screenshots)
 ├── notebooks/              # Jupyter Notebooks for EDA and prototyping
-├── reports/                # Project proposals and reports
+├── reports/                # Project proposals and milestone reports
 ├── src/                    # Source code
 │   ├── __init__.py         # Marks src as a Python package
-│   ├── app.py              # Main entry point for the Shiny App; server logic
-│   ├── data_count.py       # Data summary/count helper functions
-│   ├── data_loader.py      # Script to download and update the database
-│   ├── data_processor.py   # Script to clean and transform data
-│   ├── map.py              # Map-building logic for geographic visualizations
-│   ├── plot.py             # Altair chart builder for monthly  temperature
-│   ├── ui.py               # Frontend layout, inputs, and page assembly
-│   └── utils.py            # Data loading, pre-aggregation (yearly, seasonal, monthly), global UI config
+│   ├── app.py              # Main Shiny App entry point; handles reactive server logic
+│   ├── chat.py             # AI Assistant configuration and QueryChat integration
+│   ├── data_count.py       # Helper functions for temperature and observation summaries
+│   ├── data_loader.py      # Script to download raw datasets from Kaggle
+│   ├── data_processor.py   # Script to transform raw CSVs into optimized Parquet format
+│   ├── map.py              # Plotly logic for geographic choropleth visualizations
+│   ├── plot.py             # Altair chart builders for time-series and comparison plots
+│   ├── ui.py               # Frontend layout, selectize inputs, and page assembly
+│   └── utils.py            # Ibis/DuckDB connection and data pre-aggregation logic
+├── tests/                  # Automated testing suite
+│   ├── __init__.py
+│   ├── test_data_count.py  # Tests for observation count logic
+│   ├── test_data_preprocessor.py # Tests for Parquet transformation pipeline
+│   ├── test_map.py         # Tests for geographic highlight and zoom logic
+│   ├── test_plot.py        # Tests for Altair chart generation
+│   ├── test_table_styles.py # Tests for diverging color scale logic
+│   └── test_ui_playwright.py # End-to-end browser tests for UI interactivity
 ├── CHANGELOG.md            # Record of notable project changes
 ├── CODE_OF_CONDUCT.md      # Community and collaboration expectations
 ├── CONTRIBUTING.md         # Contribution guidelines for collaborators
-├── LICENSE                 # Project license
-├── Makefile                # Project automation scripts
+├── LICENSE                 # MIT Project license
+├── Makefile                # Automation scripts for data and environment setup
 ├── README.md               # Main project documentation
-├── description.md          # Project description and assignment context
-├── environment.yml         # Conda environment configuration
-├── link-to-release.ipynb   # Notebook for release-related deliverables
-├── requirements.txt        # Python package dependencies
-└── team.txt                # Team member information
-
+├── environment.yml         # Conda environment configuration (includes ibis-duckdb, sqlalchemy)
+├── requirements.txt        # Python package dependencies (includes pyarrow, pyarrow-hotfix)
+└── team.txt                # Team member information and roles
 ```
 
 ### Installation
@@ -160,6 +166,69 @@ If you wish to contribute to the project, please follow these steps:
 2. Create the conda environment: `make install`.
 3. Activate the environment: `conda activate 532_project`.
 4. Run the app locally using `make run` to test changes.
+
+### Running the Tests
+
+#### Prerequisites
+
+Ensure you have the required packages installed:
+
+```bash
+pip install pytest playwright pytest-playwright
+playwright install
+```
+
+#### All Tests (single command)
+
+```bash
+pytest tests/ -v
+```
+
+#### Unit Tests
+
+Test core logic functions in isolation (no app required):
+
+```bash
+# Run all unit tests
+pytest tests/ -v
+
+# Run a single test file
+pytest tests/test_plot.py -v
+```
+
+#### UI Tests (Playwright)
+
+Test the running dashboard in a real browser.
+**The app must not already be running on port 8000.**
+
+```bash
+# Run on all browsers (Chromium, Firefox, WebKit) — 18 tests total
+pytest tests/test_ui_playwright.py -v
+
+# Run on a single browser only
+pytest tests/test_ui_playwright.py -v -k "chromium"
+pytest tests/test_ui_playwright.py -v -k "firefox"
+pytest tests/test_ui_playwright.py -v -k "webkit"
+```
+
+To watch the tests run live in a visible browser window, use the
+`--headed` flag with `--slowmo` to slow things down enough to follow:
+
+```bash
+# Watch on Firefox, 1.5 seconds between each action
+pytest tests/test_ui_playwright.py -v -k "firefox" --slowmo 1500 --headed
+```
+
+#### Test Coverage Summary
+
+| File | Function tested | Tests |
+|---|---|---|
+| `tests/test_data_preprocessor.py` | `get_season()` | 13 |
+| `tests/test_data_count.py` | `data_count_prep()` | 9 |
+| `tests/test_table_styles.py` | `table_styles_wide()`, `diverging_styles()` | 9 |
+| `tests/test_map.py` | `apply_country_highlight()` | 9 |
+| `tests/test_plot.py` | `build_temp_chart()` | 9 |
+| `tests/test_ui_playwright.py` | Full dashboard UI (3 browsers) | 18 |
 
 ### Contributing
 

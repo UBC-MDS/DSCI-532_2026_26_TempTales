@@ -8,13 +8,15 @@ code quality, reproducibility and smooth collaboration.
 ## Collaboration Strategy
 
 - The `main` branch always contains stable and working code
-- All work is done on `feature branches` created from `main`
-- Changes are merged into `main` using a PR (Pull Request), which should include:
+- The `dev` branch contains the code that is under development
+- All work is done on `feature branches` created from `dev`
+- Changes are merged into `dev` using a PR (Pull Request), which should include:
   - at least one team member for review
   - a short description of what was changed
   - how it should be tested
-- After testing, the `branch` can be merged into `main` and can be
+- After testing, the `branch` can be merged into `dev` and can be
     deleted to keep the repository clean.
+- Once the team is happy with the tested `dev` product, it is merged into `main`, corresponding to a new release version.
 
 ### Branching
 
@@ -36,7 +38,7 @@ number of commits throughout the project.
 
 ## Pull Requests
 
-Changes are merged to `main` through a Pull Request. Each PR should include:
+Changes are merged to `dev` through a Pull Request. Each PR should include:
     - brief description to changes.
     - any relevant verification steps.
     - Each PR should be assigned for review to at least one other team member.
@@ -48,6 +50,12 @@ Changes are merged to `main` through a Pull Request. Each PR should include:
 
 ``` bash
 git clone https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales.git
+```
+
+### Switch to `dev`
+
+``` bash
+git branch dev
 ```
 
 ### Create a new branch
@@ -88,7 +96,7 @@ The current project applies modern software tools and organizational practices t
 
 ### Organizational Practices
 
-- The collaborators demonstrate a consistent usage of **branching** strategy that ensured a clear and well managed workflow. Before merging into `main`, at least one collaborator is required to review the PR and provide a constructive feedback or suggestion whenever needed.
+- The collaborators demonstrate a consistent usage of **branching** strategy that ensured a clear and well managed workflow. Before merging into `dev`, at least one collaborator is required to review the PR and provide a constructive feedback or suggestion whenever needed.
 
 - Clear guidelines of the code of conduct support and shape a clear collaboration.
 
@@ -101,3 +109,26 @@ If this project were scaled to a larger or production-level application, additio
 All the team members are expected to follow those guidelines to support
 an effective collaboration ([code of
 conduct](CODE_OF_CONDUCT.md))
+
+## M3 Retrospective
+
+During Milestone 3, our team continued to work from the feature branch to `dev` to `main` framework, which worked well. This helped maintain a stable working version of the app and reduced the likelihood of merge conflicts. Also, we always had another team member review PR requests before merging.
+
+However, several areas could be improved upon:
+
+- While we evaluated another team member's PR, we did not explicitly add comments in the PR describing what was checked. We had more of a discussion on Slack about whether there were any issues, but this should have been done more transparently on the issues log.
+- Work distribution across the team could be improved so that coding tasks can be shared more evenly.
+
+These observations informed the collaboration norms we adopted in Milestone 4.
+
+## M4 Norms
+
+For Milestone 4, we committed to the following practices:
+
+- We will use PRs as an opportunity to track appraisal by logging comments or discussions.
+- We will make sure that an issue is created before coding begins. This will help with modular PRs and keep them task-specific for better tracking.
+- We will link issues in the PR messaging for tracking of project development.
+- Coding tasks should be distributed across team members to provide opportunities for everyone to contribute.
+- We will avoid last-minute commits to try to have a more balanced implementation/merging of code so that we can maintain our best practices for code development.
+
+These norms were intended to improve coordination and maintain a clear project history.

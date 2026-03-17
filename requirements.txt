@@ -22,3 +22,11 @@ chatlas
 python-dotenv
 shinychat
 querychat
+ibis-framework
+duckdb
+sqlalchemy # needed for Ibis + DuckDB
+pyarrow
+pyarrow-hotfix
+pytest
+playwright
+pytest-playwright

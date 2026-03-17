@@ -14,11 +14,17 @@ AUTHORS_LIST = ["Emily Jin", "Ian Gault", "Purity Jangaya", "Yusheng Li"]
 # ==========================================
 # 1. Define Inputs
 # ==========================================
-country_selector = ui.input_select(
+country_selector = ui.input_selectize(
     "country",
     "Select Country",
     choices=country_choices,
-    selected="Canada"
+    selected="Canada",
+    multiple=False,
+    width="100%",
+    options={
+        "placeholder": "Type to search...",
+        "allowEmptyOption": False,
+    }
 )
 
 baseline_year_input = ui.input_numeric(
@@ -45,28 +51,37 @@ target_year_input = ui.input_numeric(
 # ==========================================
 # 2. Define Sidebar (Collapsible)
 # ==========================================
-app_sidebar = ui.sidebar(
+# Define the sidebar specifically for the dashboard (not the AI tab)
+dashboard_sidebar = ui.sidebar(
     country_selector,
     baseline_year_input,
     target_year_input,
     ui.output_ui("year_validation_ui"),
-    title="Filters",
-    open="closed",
-    id="app_sidebar",
+    title="Dashboard Filters",
+    open="open", 
+    id="dashboard_sidebar",
 )
+
+
 
 # ==========================================
 # 4. Define Left Column Cards
 # ==========================================
 data_count_card = ui.card(
     ui.card_header("Yearly Average Temperature"),
-    ui.output_ui("data_count_ui"),
+    ui.div(
+        ui.output_ui("data_count_ui"),
+        class_="stable-card-body data-count-body"
+    ),
     class_="mb-3"
 )
 
 event_card = ui.card(
     ui.card_header("Historical Event"),
-    ui.output_ui("event_ui"),
+    ui.div(
+        ui.output_ui("event_ui"),
+        class_="stable-card-body event-card-body"
+    ),
     class_="bg-light mb-3"
 )
 
@@ -88,7 +103,7 @@ left_column = ui.div(
 
 # Right column: row ratio 7:3 (charts : table), heatmap:line 1:1
 map_plot_card = ui.card(
-    ui.card_header("World Heatmap"),
+    ui.card_header(ui.output_ui("map_card_header")),
     ui.div(
         output_widget("map_plot"),
         style="height:100%; width:100%; min-height: 0;"
@@ -112,7 +127,7 @@ temp_plot_card = ui.card(
 table_card = ui.card(
     ui.card_header(
         ui.div(
-            "Data Table",
+            "Monthly Temp Comparison",
             ui.download_button("download_table_csv", "Export CSV", class_="btn-sm"),
             class_="d-flex justify-content-between align-items-center w-100"
         )
@@ -121,8 +136,8 @@ table_card = ui.card(
         ui.output_data_frame("data_table"),
         class_="data-table-compact"
     ),
-    style="min-height: 0; flex: 1;",
-    class_="mb-3"
+    style="min-height: 0; flex: 1; overflow: hidden;",
+    class_="mb-0"
 )
 
 # Top section (70%): heatmap 4 + line 6, bottom-aligned; Bottom section (30%): table
@@ -137,13 +152,13 @@ charts_row = ui.layout_columns(
 right_area = ui.div(
     ui.div(
         charts_row,
-        style="flex: 7; min-height: 0; display: flex; flex-direction: column;"
+        style="flex: 7; min-height: 0; display: flex; flex-direction: column; overflow: hidden;"
     ),
     ui.div(
         table_card,
         style="flex: 3; min-height: 0; display: flex; flex-direction: column; overflow: hidden;"
     ),
-    style="display: flex; flex-direction: column; min-height: 55vh;"
+    style="display: flex; flex-direction: column; min-height: 55vh; gap: 0.85rem; overflow: hidden;"
 )
 
 
@@ -259,12 +274,15 @@ app_footer = ui.tags.footer(
 # ==========================================
 # 7. Main Content (Dashboard tab)
 # ==========================================
-main_content = ui.div(
+#  add the sidebar as part of main_content
+main_content = ui.layout_sidebar(
+    dashboard_sidebar,
     ui.layout_columns(
         left_column,
         right_area,
         col_widths=[3, 9]
-    )
+    ),
+    fillable=True
 )
 
 # ==========================================
@@ -288,6 +306,9 @@ data_table_css = ui.tags.style("""
     .data-table-compact table { font-size: 0.7rem !important; }
     .data-table-compact th,
     .data-table-compact td { padding: 0.15rem 0.35rem !important; }
+    .stable-card-body { min-height: 7.5rem; }
+    .data-count-body { min-height: 9.5rem; }
+    .event-card-body { min-height: 6.5rem; }
 """)
 
 # ==========================================
@@ -301,7 +322,6 @@ app_ui = ui.TagList(
         ui.nav_panel("AI Assistant", ai_assistant_content, value="ai_assistant"),
         title=ui.output_ui("title_placeholder"),
         id="main_nav",
-        sidebar=app_sidebar,
         footer=app_footer,
         fillable=True,
         padding=[10, 10, 60, 10],
