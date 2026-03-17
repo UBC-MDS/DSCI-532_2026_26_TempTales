@@ -2,39 +2,124 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
 ## [v0.4.0] (Milestone 4 - 2026-03-17)
 
-### Added
+Note: helped with copilot since v0.3.0 and appraised
 
-- <!-- New features, components, tests - one line each. Reference PRs where relevant (e.g. #12). -->
+## Overview
+This release focuses on performance optimization, enhanced user experience, improved dashboard stability, and comprehensive testing. Major improvements include lazy loading with Ibis + DuckDB, interactive map features, better error handling, refined UI components, and full test coverage.
 
+---
 
-### Changed
+## Added
 
-- <!-- Spec or design deviations, and motivation. -->
-- <!-- Feedback items you addressed: "Addressed: <item description> (#<prioritization issue>) via #<PR>" -->
+- **Lazy Loading with Ibis + DuckDB** ([#91](https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales/pull/91))
+  - Implemented lazy loading framework using Ibis expressions and DuckDB
+  - Converted data from pickle to parquet format for better performance
+  - Optimized reactive calculations to support large datasets without memory bloat
 
-### Fixed
+- **Interactive Heatmap with Click-to-Select** ([#88](https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales/pull/88))
+  - World heatmap now displays temperature change (relative difference between baseline and target years) instead of absolute temperature
+  - Clicking on a country in the heatmap updates the country selector in the sidebar
+  - Dynamic map title showing selected country and year comparison
+  - Improved ocean vs. land contrast for better visual clarity
 
-- <!-- Bugs resolved since M3. -->
+- **Country Selection Enhancement** ([#99](https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales/pull/99))
+  - Migrated from `ui.input_select` to `ui.input_selectize` for improved country dropdown navigation
+  - Added real-time type-search functionality for easier country selection
 
-- **Feedback prioritization issue link:** #...
+- **Tab-Specific Sidebar Layout** ([#99](https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales/pull/99))
+  - Refactored sidebar to be dedicated to the Dashboard tab
+  - Sidebar automatically disappears when navigating to the AI Assistant tab for full-width workspace
 
-### Known Issues
+- **Comprehensive Test Suite** ([#100](https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales/pull/100), [#101](https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales/pull/101), [#102](https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales/pull/102))
+  - Added 48 unit tests across 5 test files covering core dashboard logic
+  - Added 6 Playwright UI tests (18 total runs across Chromium, Firefox, WebKit)
+  - Total: 67 tests with full coverage of critical paths
+  - Documentation on running tests for contributors
 
-- Our historical PR's are missing comments.
+---
 
-### Release Highlight: [Name of your advanced feature]
+## Changed
+
+- **Enhanced Error Handling & Layout Stability** ([#94](https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales/pull/94))
+  - Prevented Yearly Average Temperature and Historical Event cards from collapsing on invalid input
+  - Updated monthly data table and Temperature Over Time figure to display error messages instead of blank output
+  - Changed world heatmap invalid state to a neutral map by clearing choropleth values
+  - Added layout stabilization in the dashboard column with controlled spacing
+
+- **Color Magnitude Representation in Tables** ([#88](https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales/pull/88))
+  - Data tables now use diverging color scale (blue for cooling, red for warming) with intensity mapped to magnitude
+  - Applied consistent styling across monthly comparison and seasonal temperature tables
+  - Improved visual clarity of temperature change indicators
+
+- **Documentation Updates** ([#97](https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales/pull/97), [#98](https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales/pull/98))
+  - Updated CONTRIBUTING.md with M3 reflection and M4 norms
+  - Changed notation on branching framework to branch from `dev` instead of `main`
+  - Added release highlight, collaboration notes, and reflection sections to changelog
+
+---
+
+## Fixed
+
+- **Invalid Year Input Handling** ([#94](https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales/pull/94))
+  - Fixed layout shifting issues when invalid years are entered
+  - Improved error messaging for all cards and visualizations
+  - Issues: [#84](https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales/issues/84), [#85](https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales/issues/85), [#89](https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales/issues/89)
+
+- **Country Dropdown Navigation** ([#99](https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales/pull/99))
+  - Fixed difficult country dropdown navigation by implementing searchable selectize input
+  - Issue: [#87](https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales/issues/87)
+
+- **Sidebar Visibility on AI Tab** ([#99](https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales/pull/99))
+  - Resolved sidebar appearing on AI Assistant tab where it wasn't functional
+  - Issue: [#85](https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales/issues/85)
+
+- **Data Count Formatting** ([#100](https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales/pull/100))
+  - Fixed observation counts displaying as floats (e.g., "42.0") instead of integers (e.g., "42")
+
+---
+
+## Known Issues
+
+- Our historical PR's are missing meaningful comments.
+
+---
+
+## Technical Details
+
+**User Experience**
+- Heat map interactions
+- Error handling and stable app layout
+- Clearer titles and purpose per card
+
+**Performance:**
+- Database layer optimized with Ibis + DuckDB lazy loading
+- Data now stored in parquet format for improved I/O performance
+- Reduced memory footprint for large dataset operations
+
+**Testing:**
+- 48 unit tests: data preprocessing, table styling, map rendering, plot generation
+- 18 Playwright UI tests across 3 browsers
+- 100% critical path coverage
+
+**Dependencies Added:**
+- ibis-duckdb for lazy loading and query optimization
+
+---
+
+[View all merged PRs for v0.4.0](https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales/pulls?state=closed)
+
+---
+
+### Release Highlight: [Interactive Map]
 
 <!-- One short paragraph describing what you built and what it does for the user. -->
 
 - **Option chosen:** D
 - **PR:** #88
 - **Why this option over the others:** We thought this was the best option for an adavanced feature because it's an intuitive response for our dashboard's purpose. It allows user to intuitively filter the data by selecting countries directly from the visualization. This reduces the number of clicks and is in line with the side bar choices.
-- **Feature prioritization issue link:** #86
+- **Feature prioritization issue link:** ([#86](https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales/issues/86))
 
 ### Collaboration
 
@@ -45,6 +130,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **M4:** We used PR discussions more effectively, created issues first following by specific PRs completing those tasks, and avoided last minute commits.
 
 ### Reflection
+
+Reflection on test is in ([reflections.md](https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales/blob/dev/reflections.md))
 
 #### Dashboard Strengths and Limitations
 
