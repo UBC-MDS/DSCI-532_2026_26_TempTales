@@ -1,4 +1,7 @@
 # Tests for data_count_prep() in src/data_count.py
+# HOW TO RUN (from project root):
+#   pytest tests/test_data_count.py -v
+
 import pandas as pd
 import pytest
 from src.data_count import data_count_prep
@@ -18,7 +21,7 @@ def make_df(year: int, avg_temp: float, avg_uncertainty: float, data_count: int)
         "year":            [year],
         "avg_temp":        [avg_temp],
         "avg_uncertainty": [avg_uncertainty],
-        "data_count":      [data_count],
+        "data_count":      [float(data_count)],
     })
 
 
@@ -173,7 +176,7 @@ def test_data_count_prep_correct_row_selected():
         "year":            [1950, 2000],
         "avg_temp":        [3.1,  8.9],
         "avg_uncertainty": [0.2,  0.3],
-        "data_count":      [10,   20],
+        "data_count":      [10.0,   20.0],
     })
 
     display_text, sub_text = data_count_prep(df, 2000)

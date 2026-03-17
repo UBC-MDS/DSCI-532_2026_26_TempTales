@@ -12,7 +12,7 @@ def data_count_prep(df: pd.DataFrame, year: int):
         uncertainty = year_df.iloc[0]["avg_uncertainty"]
         count = year_df.iloc[0]["data_count"]
         display_text = f"{temp:.1f} ± {uncertainty:.1f} °C"
-        sub_text = f"Based on {count} observations"
+        sub_text = f"Based on {int(count)} observations"
     else: 
         display_text = "No Data"
         sub_text = f"No records for {year}"
