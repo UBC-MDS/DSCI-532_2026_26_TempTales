@@ -161,6 +161,69 @@ If you wish to contribute to the project, please follow these steps:
 3. Activate the environment: `conda activate 532_project`.
 4. Run the app locally using `make run` to test changes.
 
+### Running the Tests
+
+#### Prerequisites
+
+Ensure you have the required packages installed:
+
+```bash
+pip install pytest playwright pytest-playwright
+playwright install
+```
+
+#### All Tests (single command)
+
+```bash
+pytest tests/ -v
+```
+
+#### Unit Tests
+
+Test core logic functions in isolation (no app required):
+
+```bash
+# Run all unit tests
+pytest tests/ -v
+
+# Run a single test file
+pytest tests/test_plot.py -v
+```
+
+#### UI Tests (Playwright)
+
+Test the running dashboard in a real browser.
+**The app must not already be running on port 8000.**
+
+```bash
+# Run on all browsers (Chromium, Firefox, WebKit) — 18 tests total
+pytest tests/test_ui_playwright.py -v
+
+# Run on a single browser only
+pytest tests/test_ui_playwright.py -v -k "chromium"
+pytest tests/test_ui_playwright.py -v -k "firefox"
+pytest tests/test_ui_playwright.py -v -k "webkit"
+```
+
+To watch the tests run live in a visible browser window, use the
+`--headed` flag with `--slowmo` to slow things down enough to follow:
+
+```bash
+# Watch on Firefox, 1.5 seconds between each action
+pytest tests/test_ui_playwright.py -v -k "firefox" --slowmo 1500 --headed
+```
+
+#### Test Coverage Summary
+
+| File | Function tested | Tests |
+|---|---|---|
+| `tests/test_data_preprocessor.py` | `get_season()` | 13 |
+| `tests/test_data_count.py` | `data_count_prep()` | 9 |
+| `tests/test_table_styles.py` | `table_styles_wide()`, `diverging_styles()` | 9 |
+| `tests/test_map.py` | `apply_country_highlight()` | 9 |
+| `tests/test_plot.py` | `build_temp_chart()` | 9 |
+| `tests/test_ui_playwright.py` | Full dashboard UI (3 browsers) | 18 |
+
 ### Contributing
 
 Contributors are expected to follow the guidelines outlined in **[CONTRIBUTING.md](./CONTRIBUTING.md)**. Please review this document before submitting issues or pull requests.
