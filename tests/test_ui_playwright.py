@@ -103,7 +103,7 @@ def page(request, shiny_app, playwright):
     if browser_name == "chromium":
         browser = playwright.chromium.launch(headless=True)
     elif browser_name == "firefox":
-        browser = playwright.firefox.launch(headless=False)
+        browser = playwright.firefox.launch(headless=True)
     else:
         browser = playwright.webkit.launch(headless=True)
 
