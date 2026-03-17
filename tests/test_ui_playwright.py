@@ -32,6 +32,9 @@
 #   tests. The shiny_app fixture starts its own instance — if port 8000
 #   is already occupied it will fail with a connection error.
 
+# AI USAGE:
+#   AI was used in brainstorming the test cases and writing the docstrings. 
+
 import subprocess
 import time
 
