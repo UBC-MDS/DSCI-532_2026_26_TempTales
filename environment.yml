@@ -29,4 +29,7 @@ dependencies:
     - python-dotenv
     - shinychat
     - querychat
-
+    - pytest
+    - playwright
+    - pytest-playwright
+    
