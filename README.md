@@ -88,6 +88,14 @@ The core logic of the project is located in the `src/` directory.
 ├── link-to-release.ipynb   # Notebook for release-related deliverables
 ├── requirements.txt        # Python package dependencies
 └── team.txt                # Team member information
+├── tests/                  # Automated tests
+│   ├── __init__.py
+│   ├── test_data_count.py
+│   ├── test_data_preprocessor.py
+│   ├── test_map.py
+│   ├── test_plot.py
+│   ├── test_table_styles.py
+│   └── test_ui_playwright.py
 
 ```
 
