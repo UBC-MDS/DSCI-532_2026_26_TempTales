@@ -77,7 +77,9 @@ def build_temp_chart(
         values=list(range(1, 13)),
         labelExpr="['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][datum.value-1]",
         labelAngle=-45,
-        labelPadding=8
+        labelPadding=8,
+        labelFontSize=13,
+        titleFontSize=13
     )
     month_scale = alt.Scale(domain=[0.5, 12.5])
 
@@ -97,7 +99,7 @@ def build_temp_chart(
         .encode(
             x=alt.X("month_num:Q", axis=month_axis,
                     scale=month_scale, title="Month"),
-            y=alt.Y("Temperature:Q", title="Temperature (°C)", scale=temp_scale),
+            y=alt.Y("Temperature:Q", title="Monthly Avg. Temp (°C)", scale=temp_scale),
             color=alt.Color(
                 "Year:N",
                 scale=alt.Scale(range=["#2C7A7B", "#38B2AC"]),
