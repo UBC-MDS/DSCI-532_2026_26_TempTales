@@ -57,6 +57,9 @@ This release focuses on performance optimization, enhanced user experience, impr
   - Updated CONTRIBUTING.md with M3 reflection and M4 norms
   - Changed notation on branching framework to branch from `dev` instead of `main`
   - Added release highlight, collaboration notes, and reflection sections to changelog
+ 
+- **Figure and Table Updates** ([#105](https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales/pull/105))
+  - addressing label issues in figure and table from  ([#85](https://github.com/UBC-MDS/DSCI-532_2026_26_TempTales/issues/85))
 
 ---
 
